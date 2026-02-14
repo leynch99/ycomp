@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CartPageClient } from "@/components/CartPageClient";
 
@@ -10,7 +11,9 @@ export default function CartPage() {
           <h1 className="text-2xl font-semibold text-slate-900">Кошик</h1>
         </div>
         <div className="mt-6">
-          <CartPageClient />
+          <Suspense fallback={<div className="text-sm text-slate-400">Завантаження…</div>}>
+            <CartPageClient />
+          </Suspense>
         </div>
       </div>
     </div>

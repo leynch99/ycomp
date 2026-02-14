@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { buildOrderBy, buildWhere } from "@/lib/catalog";
 import { toArray, toNumberArray } from "@/lib/query";
@@ -124,7 +125,9 @@ export default async function CatalogPage({
           >
             Компактний
           </a>
-          <CatalogSort />
+          <Suspense fallback={<span className="text-xs text-slate-400">…</span>}>
+            <CatalogSort />
+          </Suspense>
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2 text-xs">
@@ -151,6 +154,7 @@ export default async function CatalogPage({
           <aside className="rounded-2xl border border-slate-200/70 bg-white p-4 lg:sticky lg:top-32 lg:h-fit">
             <div className="text-sm font-semibold text-slate-900">Фільтри</div>
             <div className="mt-4">
+              <Suspense fallback={<div className="text-xs text-slate-400">Завантаження…</div>}>
               <CatalogFilters
                 brands={unique(meta.map((m) => m.brand))}
                 sockets={unique(meta.map((m) => m.socket))}
@@ -166,6 +170,7 @@ export default async function CatalogPage({
                 psuWattages={unique(meta.map((m) => m.psuWattage))}
                 psuCerts={unique(meta.map((m) => m.psuCert))}
               />
+              </Suspense>
             </div>
           </aside>
           <section>
