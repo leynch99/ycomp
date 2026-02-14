@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const resolvedParams = await params;
+export async function GET(_request: NextRequest, context: { params: any }) {
+  const resolvedParams = await Promise.resolve(context.params);
   const product = await prisma.product.findUnique({
     where: { id: resolvedParams.id },
     include: { images: { orderBy: { position: "asc" }, take: 1 } },
