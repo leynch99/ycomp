@@ -1,0 +1,129 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+type OrderSummary = {
+  id: string;
+  number: string;
+  status: string;
+  total: number;
+  createdAt: string;
+};
+
+export function AccountClient() {
+  const [tab, setTab] = useState<"login" | "register">("login");
+  const [orders, setOrders] = useState<OrderSummary[]>([]);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/account/orders")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setOrders(data?.orders ?? []))
+      .catch(() => null);
+  }, []);
+
+  const submit = async (event: React.FormEvent<HTMLFormElement>, path: string) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const payload = Object.fromEntries(formData.entries());
+    const res = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    setMessage(res.ok ? "Успішно" : "Помилка");
+  };
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+      <div className="rounded-2xl border border-slate-200/70 bg-white p-6">
+        <div className="flex gap-2 text-sm">
+          <button
+            onClick={() => setTab("login")}
+            className={`rounded-full px-4 py-2 ${
+              tab === "login" ? "bg-lilac text-white" : "border border-slate-200 text-slate-600"
+            }`}
+          >
+            Вхід
+          </button>
+          <button
+            onClick={() => setTab("register")}
+            className={`rounded-full px-4 py-2 ${
+              tab === "register" ? "bg-lilac text-white" : "border border-slate-200 text-slate-600"
+            }`}
+          >
+            Реєстрація
+          </button>
+        </div>
+        {tab === "login" ? (
+          <form onSubmit={(event) => submit(event, "/api/auth/login")} className="mt-4 space-y-3">
+            <input
+              name="email"
+              required
+              type="email"
+              placeholder="Email"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            />
+            <input
+              name="password"
+              required
+              type="password"
+              placeholder="Пароль"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            />
+            <button className="w-full rounded-full bg-lilac px-4 py-2 text-sm text-white">
+              Увійти
+            </button>
+          </form>
+        ) : (
+          <form
+            onSubmit={(event) => submit(event, "/api/auth/register")}
+            className="mt-4 space-y-3"
+          >
+            <input
+              name="name"
+              required
+              placeholder="Імʼя"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            />
+            <input
+              name="email"
+              required
+              type="email"
+              placeholder="Email"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            />
+            <input
+              name="password"
+              required
+              type="password"
+              placeholder="Пароль"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            />
+            <button className="w-full rounded-full bg-lilac px-4 py-2 text-sm text-white">
+              Створити акаунт
+            </button>
+          </form>
+        )}
+        {message && <div className="mt-3 text-xs text-slate-500">{message}</div>}
+      </div>
+      <div className="rounded-2xl border border-slate-200/70 bg-white p-6">
+        <div className="text-sm font-semibold text-slate-900">Мої замовлення</div>
+        <div className="mt-4 space-y-3 text-sm text-slate-600">
+          {orders.length === 0 && <div>Поки що немає замовлень.</div>}
+          {orders.map((order) => (
+            <div
+              key={order.id}
+              className="flex items-center justify-between rounded-xl border border-slate-100 bg-white px-3 py-2"
+            >
+              <span>№{order.number}</span>
+              <span className="rounded-full border border-lilac px-2 py-1 text-[11px] text-slate-600">
+                {order.status}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

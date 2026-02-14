@@ -1,0 +1,239 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  SENT_TO_SUPPLIER
+  SHIPPED
+  DELIVERED
+  CLOSED
+  CANCELLED
+  RETURN_REQUESTED
+  RETURNED
+}
+
+enum PayoutStatus {
+  PENDING
+  PAID
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now())
+
+  orders Order[]
+}
+
+model Supplier {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  email         String?
+  phone         String?
+  deliveryTerms String?
+  createdAt     DateTime @default(now())
+
+  products Product[]
+  payouts  SupplierPayout[]
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+
+  parentId String?
+  parent   Category? @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryToCategory")
+
+  products Product[]
+}
+
+model Product {
+  id               String    @id @default(cuid())
+  name             String
+  slug             String    @unique
+  sku              String    @unique
+  brand            String
+  description      String
+  categoryId       String
+  supplierId       String
+  costPrice        Int
+  salePrice        Int
+  oldPrice         Int?
+  stockQty         Int?
+  inStock          Boolean   @default(true)
+  leadTimeMinDays  Int?
+  leadTimeMaxDays  Int?
+  isDeal           Boolean   @default(false)
+  isOutlet         Boolean   @default(false)
+  popularity       Int       @default(0)
+  specs            Json?
+
+  socket           String?
+  cores            Int?
+  threads          Int?
+  chipset          String?
+  formFactor       String?
+  ramType          String?
+  ramCapacity      Int?
+  ramFrequency     Int?
+  storageType      String?
+  storageCapacity  Int?
+  psuWattage       Int?
+  psuCert          String?
+  powerW           Int?
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id])
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+  images   ProductImage[]
+  items    OrderItem[]
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  url       String
+  alt       String?
+  position  Int     @default(0)
+  productId String
+
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  number        String      @unique
+  status        OrderStatus @default(NEW)
+  customerName  String
+  phone         String
+  email         String
+  city          String
+  npBranch      String
+  paymentMethod String
+  comment       String?
+  total         Int
+  currency      String      @default("UAH")
+  language      String      @default("ua")
+  userId        String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  user    User?        @relation(fields: [userId], references: [id])
+  items   OrderItem[]
+  payouts SupplierPayout[]
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String?
+  name      String
+  sku       String
+  qty       Int
+  price     Int
+  costPrice Int
+  margin    Int
+  createdAt DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product? @relation(fields: [productId], references: [id])
+}
+
+model SupplierPayout {
+  id         String       @id @default(cuid())
+  orderId    String
+  supplierId String
+  amount     Int
+  status     PayoutStatus @default(PENDING)
+  paidAt     DateTime?
+  comment    String?
+  createdAt  DateTime     @default(now())
+
+  order    Order    @relation(fields: [orderId], references: [id])
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+}
+
+model TradeInRequest {
+  id         String   @id @default(cuid())
+  deviceType String
+  model      String
+  condition  String
+  photoUrl   String?
+  contacts   String
+  comment    String?
+  status     String   @default("NEW")
+  createdAt  DateTime @default(now())
+}
+
+model ServiceRequest {
+  id          String   @id @default(cuid())
+  serviceType String
+  contacts    String
+  comment     String?
+  status      String   @default("NEW")
+  createdAt   DateTime @default(now())
+}
+
+model ContactRequest {
+  id        String   @id @default(cuid())
+  phone     String
+  question  String
+  status    String   @default("NEW")
+  createdAt DateTime @default(now())
+}
+
+model NpCity {
+  id        String     @id @default(cuid())
+  name      String
+  region    String
+  createdAt DateTime   @default(now())
+
+  branches NpBranch[]
+}
+
+model NpBranch {
+  id        String   @id @default(cuid())
+  cityId    String
+  name      String
+  address   String
+  createdAt DateTime @default(now())
+
+  city NpCity @relation(fields: [cityId], references: [id])
+}
+
+model ContentPage {
+  id       String   @id @default(cuid())
+  slug     String   @unique
+  titleUa  String
+  titleRu  String
+  bodyUa   String
+  bodyRu   String
+  updatedAt DateTime @updatedAt
+}
