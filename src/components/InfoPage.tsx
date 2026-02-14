@@ -7,12 +7,14 @@ export async function InfoPage({
   title,
   children,
 }: {
-  slug: string;
+  slug?: string;
   title: string;
   children: React.ReactNode;
 }) {
   const lang = await getLang();
-  const content = await prisma.contentPage.findUnique({ where: { slug } });
+  const content = slug
+    ? await prisma.contentPage.findUnique({ where: { slug } })
+    : null;
   const pageTitle =
     content ? (lang === "ru" ? content.titleRu : content.titleUa) : title;
   const body =
