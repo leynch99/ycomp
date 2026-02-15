@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { formatPrice } from "@/lib/utils";
+import { AdminProductForm } from "./AdminProductForm";
 
 type Option = { id: string; name: string };
-type ProductRow = { id: string; name: string; brand: string; salePrice: number };
+type ProductRow = { id: string; name: string; brand: string; salePrice: number; isDeal: boolean; isOutlet: boolean; inStock: boolean };
 
 export function AdminProductsClient({
   categories,
@@ -14,66 +17,73 @@ export function AdminProductsClient({
   suppliers: Option[];
   products: ProductRow[];
 }) {
-  const [message, setMessage] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
-  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const payload = Object.fromEntries(formData.entries());
-    const res = await fetch("/api/admin/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+  const deleteProduct = async (id: string, name: string) => {
+    if (!confirm(`Видалити "${name}"?`)) return;
+    const res = await fetch(`/api/admin/products/${id}`, {
+      method: "DELETE",
+      credentials: "include",
     });
-    setMessage(res.ok ? "Збережено" : "Помилка");
     if (res.ok) window.location.reload();
   };
 
   return (
     <div className="space-y-6">
-      <form
-        onSubmit={submit}
-        className="grid gap-3 rounded-2xl border border-slate-200/70 bg-white p-4 text-sm"
-      >
-        <div className="grid gap-3 sm:grid-cols-2">
-          <input name="name" placeholder="Назва" required className="rounded-lg border border-slate-200 px-3 py-2" />
-          <input name="slug" placeholder="Slug" required className="rounded-lg border border-slate-200 px-3 py-2" />
-          <input name="sku" placeholder="SKU" required className="rounded-lg border border-slate-200 px-3 py-2" />
-          <input name="brand" placeholder="Бренд" required className="rounded-lg border border-slate-200 px-3 py-2" />
-          <input name="costPrice" placeholder="Закуп" required className="rounded-lg border border-slate-200 px-3 py-2" />
-          <input name="salePrice" placeholder="Ціна" required className="rounded-lg border border-slate-200 px-3 py-2" />
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <select name="categoryId" required className="rounded-lg border border-slate-200 px-3 py-2">
-            <option value="">Категорія</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-          <select name="supplierId" required className="rounded-lg border border-slate-200 px-3 py-2">
-            <option value="">Постачальник</option>
-            {suppliers.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button className="w-fit rounded-full bg-lilac px-4 py-2 text-xs text-white">
-          Додати товар
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => setShowForm((v) => !v)}
+          className="rounded-full bg-lilac px-5 py-2 text-xs text-white"
+        >
+          {showForm ? "Сховати форму" : "+ Додати товар"}
         </button>
-        {message && <div className="text-xs text-slate-500">{message}</div>}
-      </form>
+      </div>
 
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-4 text-sm">
-        <div className="font-semibold text-slate-900">Останні товари</div>
-        <div className="mt-3 space-y-2 text-slate-600">
+      {showForm && (
+        <div className="rounded-xl border border-lilac/30 bg-[var(--lilac-50)]/30 p-4">
+          <AdminProductForm
+            categories={categories}
+            suppliers={suppliers}
+            onSuccess={() => {
+              setTimeout(() => window.location.reload(), 800);
+            }}
+          />
+        </div>
+      )}
+
+      <div className="rounded-xl border border-slate-200/70 bg-white text-sm">
+        <div className="border-b border-slate-100 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Товари ({products.length})
+        </div>
+        <div className="divide-y divide-slate-100">
           {products.map((product) => (
-            <div key={product.id} className="flex justify-between">
-              <span>{product.name}</span>
-              <span>{product.brand}</span>
+            <div key={product.id} className="flex items-center gap-3 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium text-slate-900">{product.name}</div>
+                <div className="mt-0.5 flex flex-wrap gap-1.5 text-[10px]">
+                  <span className="text-slate-500">{product.brand}</span>
+                  {product.isDeal && <span className="rounded-full bg-emerald-500 px-1.5 py-0.5 text-white">Акція</span>}
+                  {product.isOutlet && <span className="rounded-full bg-orange-500 px-1.5 py-0.5 text-white">Уцінка</span>}
+                  {!product.inStock && <span className="rounded-full bg-slate-400 px-1.5 py-0.5 text-white">Немає</span>}
+                </div>
+              </div>
+              <div className="shrink-0 text-right text-sm font-semibold text-slate-900">
+                {formatPrice(product.salePrice)}
+              </div>
+              <div className="flex shrink-0 gap-1">
+                <Link
+                  href={`/admin/products/${product.id}`}
+                  className="rounded-full border border-lilac px-3 py-1 text-[11px] text-slate-700 hover:bg-[var(--lilac-50)]"
+                >
+                  Редагувати
+                </Link>
+                <button
+                  onClick={() => deleteProduct(product.id, product.name)}
+                  className="rounded-full border border-red-200 px-3 py-1 text-[11px] text-red-600 hover:bg-red-50"
+                >
+                  Видалити
+                </button>
+              </div>
             </div>
           ))}
         </div>

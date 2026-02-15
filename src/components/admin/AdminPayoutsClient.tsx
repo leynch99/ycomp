@@ -1,5 +1,7 @@
 "use client";
 
+import { formatPrice } from "@/lib/utils";
+
 type PayoutRow = {
   id: string;
   supplier: string;
@@ -8,23 +10,18 @@ type PayoutRow = {
 };
 
 export function AdminPayoutsClient({ payouts }: { payouts: PayoutRow[] }) {
-  const format = (value: number) =>
-    new Intl.NumberFormat("uk-UA", {
-      style: "currency",
-      currency: "UAH",
-      maximumFractionDigits: 0,
-    }).format(value);
   const markPaid = async (id: string) => {
     await fetch(`/api/admin/payouts/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ status: "PAID" }),
     });
     window.location.reload();
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white p-4 text-sm">
+    <div className="rounded-xl border border-slate-200/70 bg-white p-4 text-sm">
       <table className="w-full">
         <thead>
           <tr className="text-left text-[11px] uppercase tracking-wide text-slate-400">
@@ -38,20 +35,27 @@ export function AdminPayoutsClient({ payouts }: { payouts: PayoutRow[] }) {
           {payouts.map((payout) => (
             <tr key={payout.id} className="border-t border-slate-100">
               <td className="py-2">{payout.supplier}</td>
-              <td className="py-2">{format(payout.amount)}</td>
-              <td className="py-2">{payout.status}</td>
+              <td className="py-2">{formatPrice(payout.amount)}</td>
+              <td className="py-2">
+                <span className={`rounded-full px-2 py-0.5 text-[11px] ${payout.status === "PAID" ? "bg-emerald-50 text-emerald-700" : "bg-orange-50 text-orange-700"}`}>
+                  {payout.status === "PAID" ? "Виплачено" : "Очікує"}
+                </span>
+              </td>
               <td className="py-2">
                 {payout.status === "PENDING" && (
                   <button
                     onClick={() => markPaid(payout.id)}
-                    className="rounded-full border border-lilac px-3 py-1 text-xs text-slate-700"
+                    className="rounded-full border border-lilac px-3 py-1 text-[11px] text-slate-700 hover:bg-[var(--lilac-50)]"
                   >
-                    Позначити як PAID
+                    Позначити виплаченим
                   </button>
                 )}
               </td>
             </tr>
           ))}
+          {payouts.length === 0 && (
+            <tr><td colSpan={4} className="py-4 text-center text-slate-400">Виплат поки немає</td></tr>
+          )}
         </tbody>
       </table>
     </div>

@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { AdminOrdersClient } from "@/components/admin/AdminOrdersClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminOrdersPage() {
   const orders = await prisma.order.findMany({
     orderBy: { createdAt: "desc" },
@@ -10,7 +12,7 @@ export default async function AdminOrdersPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold text-slate-900">Orders</h1>
+      <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">Замовлення</h1>
       <AdminOrdersClient orders={orders} />
     </div>
   );

@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { AdminSuppliersClient } from "@/components/admin/AdminSuppliersClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminSuppliersPage() {
   const suppliers = await prisma.supplier.findMany({
     orderBy: { name: "asc" },
@@ -9,7 +11,7 @@ export default async function AdminSuppliersPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold text-slate-900">Suppliers</h1>
+      <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">Постачальники</h1>
       <AdminSuppliersClient suppliers={suppliers} />
     </div>
   );

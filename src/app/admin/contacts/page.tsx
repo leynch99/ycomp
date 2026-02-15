@@ -11,7 +11,7 @@ export default async function AdminContactsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold text-slate-900">Quick contact</h1>
+      <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">Швидкий звʼязок</h1>
       <AdminContactsClient requests={requests} />
     </div>
   );

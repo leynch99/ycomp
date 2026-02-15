@@ -30,14 +30,14 @@ export function AdminContactsClient({ requests }: { requests: ContactRow[] }) {
         setRows(prev);
         setError(`Помилка оновлення (${res.status})`);
       }
-    } catch (err) {
+    } catch {
       setRows(prev);
       setError("Помилка мережі");
     }
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white p-4 text-sm">
+    <div className="rounded-xl border border-slate-200/70 bg-white p-4 text-sm">
       {error && <div className="mb-3 text-xs text-red-600">{error}</div>}
       <table className="w-full">
         <thead>
@@ -54,19 +54,19 @@ export function AdminContactsClient({ requests }: { requests: ContactRow[] }) {
               <td className="py-2">{req.question}</td>
               <td className="py-2">
                 <select
-                  defaultValue={req.status}
+                  value={req.status}
                   onChange={(event) => updateStatus(req.id, event.target.value)}
                   className="rounded-lg border border-lilac px-2 py-1 text-xs text-slate-700"
                 >
-                  {["NEW", "DONE"].map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
+                  <option value="NEW">Новий</option>
+                  <option value="DONE">Оброблено</option>
                 </select>
               </td>
             </tr>
           ))}
+          {rows.length === 0 && (
+            <tr><td colSpan={3} className="py-4 text-center text-slate-400">Запитів поки немає</td></tr>
+          )}
         </tbody>
       </table>
     </div>
