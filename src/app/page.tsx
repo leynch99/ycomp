@@ -51,12 +51,82 @@ export default async function Home() {
 
   return (
     <div className="space-y-12 sm:space-y-20">
-      {/* Hero Banners */}
-      {hasBanners ? (
-        <section className="mx-auto max-w-7xl px-4 pt-4 sm:pt-8">
+      {/* Static Hero */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-white via-[var(--lilac-50)] to-white py-6 sm:py-10">
+        <div className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-[var(--lilac-100)] blur-3xl" />
+        <div className="pointer-events-none absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-[var(--lilac-100)] blur-3xl" />
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="grid gap-6 rounded-2xl border border-lilac bg-gradient-to-br from-[var(--lilac-50)] via-white to-[var(--lilac-100)] p-5 shadow-sm sm:gap-8 sm:rounded-3xl sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400 sm:text-xs">ycomp.ua</div>
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+                Інтернет-магазин компʼютерних комплектуючих
+              </h1>
+              <p className="text-sm text-slate-600 sm:text-base">
+                Швидкий підбір, перевірка сумісності, доставка Новою Поштою та сервіс.
+              </p>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/configurator"
+                  className="rounded-full bg-lilac px-5 py-2.5 text-center text-sm text-white transition hover:opacity-90 sm:px-6 sm:py-3"
+                >
+                  Зібрати ПК
+                </Link>
+                <Link
+                  href="/catalog"
+                  className="rounded-full border border-lilac px-5 py-2.5 text-center text-sm text-slate-700 transition hover:border-[var(--lilac-500)] hover:text-[var(--lilac-900)] sm:px-6 sm:py-3"
+                >
+                  Підібрати апгрейд
+                </Link>
+              </div>
+              <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                {[
+                  { value: "50k+", label: "товарів" },
+                  { value: "1–3", label: "дні доставки" },
+                  { value: "14 днів", label: "на повернення" },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-xl border border-white/60 bg-white/70 px-3 py-2 sm:rounded-2xl sm:px-4 sm:py-3">
+                    <div className="text-sm font-semibold text-slate-900 sm:text-lg">{item.value}</div>
+                    <div className="text-[10px] text-slate-500 sm:text-xs">{item.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="hidden rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-lilac sm:block">
+              <div className="text-sm font-medium text-slate-700">Пошук комплектуючих</div>
+              <div className="mt-4 rounded-2xl border border-lilac bg-white p-5">
+                <div className="text-xs uppercase text-slate-400">Популярні запити</div>
+                <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                  {["RTX 4070", "Ryzen 7", "DDR5 32GB", "NVMe 1TB"].map((q) => (
+                    <Link
+                      key={q}
+                      href={`/catalog?q=${encodeURIComponent(q)}`}
+                      className="rounded-full border border-slate-200 px-3 py-1 text-slate-600 transition hover:border-[var(--lilac-500)] hover:text-[var(--lilac-900)]"
+                    >
+                      {q}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-6 grid gap-3 text-sm">
+                <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-slate-700">
+                  Підбір апгрейду за 10 хвилин
+                </div>
+                <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-slate-700">
+                  Trade-in і сервіс
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Dynamic Banners */}
+      {hasBanners && (
+        <section className="-mt-6 sm:-mt-12 mx-auto max-w-7xl px-4">
           <div className="grid gap-3 sm:gap-4 lg:grid-cols-[1.6fr_1fr]">
             {/* Large hero banner */}
-            {hero ? (
+            {hero && (
               <Link
                 href={hero.linkUrl}
                 className="group relative flex min-h-[220px] items-end overflow-hidden rounded-2xl sm:min-h-[340px] sm:rounded-3xl lg:row-span-2 lg:min-h-[420px]"
@@ -84,15 +154,6 @@ export default async function Home() {
                   </span>
                 </div>
               </Link>
-            ) : (
-              <div className="rounded-2xl bg-gradient-to-br from-[var(--lilac-100)] to-[var(--lilac-50)] p-8 lg:row-span-2">
-                <h2 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
-                  Інтернет-магазин компʼютерних комплектуючих
-                </h2>
-                <p className="mt-3 text-sm text-slate-600">
-                  Швидкий підбір, доставка Новою Поштою та сервіс.
-                </p>
-              </div>
             )}
 
             {/* Tile grid */}
@@ -126,76 +187,6 @@ export default async function Home() {
                 ))}
               </div>
             )}
-          </div>
-        </section>
-      ) : (
-        /* Static fallback hero when no banners exist */
-        <section className="relative overflow-hidden bg-gradient-to-br from-white via-[var(--lilac-50)] to-white py-6 sm:py-10">
-          <div className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-[var(--lilac-100)] blur-3xl" />
-          <div className="pointer-events-none absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-[var(--lilac-100)] blur-3xl" />
-          <div className="mx-auto max-w-7xl px-4">
-            <div className="grid gap-6 rounded-2xl border border-lilac bg-gradient-to-br from-[var(--lilac-50)] via-white to-[var(--lilac-100)] p-5 shadow-sm sm:gap-8 sm:rounded-3xl sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
-              <div className="space-y-4 sm:space-y-6">
-                <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400 sm:text-xs">ycomp.ua</div>
-                <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
-                  Інтернет-магазин компʼютерних комплектуючих
-                </h1>
-                <p className="text-sm text-slate-600 sm:text-base">
-                  Швидкий підбір, перевірка сумісності, доставка Новою Поштою та сервіс.
-                </p>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    href="/configurator"
-                    className="rounded-full bg-lilac px-5 py-2.5 text-center text-sm text-white transition hover:opacity-90 sm:px-6 sm:py-3"
-                  >
-                    Зібрати ПК
-                  </Link>
-                  <Link
-                    href="/catalog"
-                    className="rounded-full border border-lilac px-5 py-2.5 text-center text-sm text-slate-700 transition hover:border-[var(--lilac-500)] hover:text-[var(--lilac-900)] sm:px-6 sm:py-3"
-                  >
-                    Підібрати апгрейд
-                  </Link>
-                </div>
-                <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                  {[
-                    { value: "50k+", label: "товарів" },
-                    { value: "1–3", label: "дні доставки" },
-                    { value: "14 днів", label: "на повернення" },
-                  ].map((item) => (
-                    <div key={item.label} className="rounded-xl border border-white/60 bg-white/70 px-3 py-2 sm:rounded-2xl sm:px-4 sm:py-3">
-                      <div className="text-sm font-semibold text-slate-900 sm:text-lg">{item.value}</div>
-                      <div className="text-[10px] text-slate-500 sm:text-xs">{item.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="hidden rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-lilac sm:block">
-                <div className="text-sm font-medium text-slate-700">Пошук комплектуючих</div>
-                <div className="mt-4 rounded-2xl border border-lilac bg-white p-5">
-                  <div className="text-xs uppercase text-slate-400">Популярні запити</div>
-                  <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                    {["RTX 4070", "Ryzen 7", "DDR5 32GB", "NVMe 1TB"].map((q) => (
-                      <Link
-                        key={q}
-                        href={`/catalog?q=${encodeURIComponent(q)}`}
-                        className="rounded-full border border-slate-200 px-3 py-1 text-slate-600 transition hover:border-[var(--lilac-500)] hover:text-[var(--lilac-900)]"
-                      >
-                        {q}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-                <div className="mt-6 grid gap-3 text-sm">
-                  <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-slate-700">
-                    Підбір апгрейду за 10 хвилин
-                  </div>
-                  <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-slate-700">
-                    Trade-in і сервіс
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
       )}
