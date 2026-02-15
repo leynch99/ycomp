@@ -53,8 +53,8 @@ export default async function Home() {
     <div className="space-y-12 sm:space-y-20">
       {/* Static Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-white via-[var(--lilac-50)] to-white py-6 sm:py-10">
-        <div className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-[var(--lilac-100)] blur-3xl" />
-        <div className="pointer-events-none absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-[var(--lilac-100)] blur-3xl" />
+        <div className="pointer-events-none absolute -left-24 top-10 h-40 w-40 rounded-full bg-[var(--lilac-100)] blur-xl sm:h-72 sm:w-72 sm:blur-3xl" />
+        <div className="pointer-events-none absolute -right-20 bottom-0 h-40 w-40 rounded-full bg-[var(--lilac-100)] blur-xl sm:h-72 sm:w-72 sm:blur-3xl" />
         <div className="mx-auto max-w-7xl px-4">
           <div className="grid gap-6 rounded-2xl border border-lilac bg-gradient-to-br from-[var(--lilac-50)] via-white to-[var(--lilac-100)] p-5 shadow-sm sm:gap-8 sm:rounded-3xl sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-4 sm:space-y-6">
