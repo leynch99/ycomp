@@ -86,9 +86,9 @@ export function CheckoutForm() {
   }, [cityId]);
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-      <div className="space-y-4 rounded-2xl border border-slate-200/70 bg-white p-6">
-        <div className="text-sm font-semibold text-slate-900">Контактні дані</div>
+    <form onSubmit={onSubmit} className="grid gap-4 sm:gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <div className="space-y-3 rounded-xl border border-slate-200/70 bg-white p-4 sm:space-y-4 sm:rounded-2xl sm:p-6">
+        <div className="text-xs font-semibold text-slate-900 sm:text-sm">Контактні дані</div>
         <div className="grid gap-3 sm:grid-cols-2">
           <input
             name="name"
@@ -192,9 +192,9 @@ export function CheckoutForm() {
           className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
         />
       </div>
-      <aside className="space-y-4 rounded-2xl border border-lilac bg-white p-6 shadow-sm lg:sticky lg:top-32">
-        <div className="text-sm font-semibold text-slate-900">Ваше замовлення</div>
-        <div className="space-y-2 text-sm text-slate-600">
+      <aside className="space-y-3 rounded-xl border border-lilac bg-white p-4 shadow-sm sm:space-y-4 sm:rounded-2xl sm:p-6 lg:sticky lg:top-32">
+        <div className="text-xs font-semibold text-slate-900 sm:text-sm">Ваше замовлення</div>
+        <div className="space-y-2 text-xs text-slate-600 sm:text-sm">
           {items.map((item) => (
             <div key={item.id} className="flex justify-between">
               <span>
@@ -204,7 +204,7 @@ export function CheckoutForm() {
             </div>
           ))}
         </div>
-        <div className="flex justify-between text-sm font-semibold">
+        <div className="flex justify-between text-xs font-semibold sm:text-sm">
           <span>Разом</span>
           <span>{formatPrice(total)}</span>
         </div>

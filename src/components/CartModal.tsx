@@ -23,11 +23,11 @@ export function CartModal() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 transition-opacity duration-200"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 px-0 transition-opacity duration-200 sm:items-center sm:px-4"
       onClick={closeModal}
     >
       <div
-        className="w-full max-w-lg animate-[cartIn_200ms_ease-out] rounded-3xl border border-lilac bg-white p-6 shadow-xl"
+        className="w-full max-w-lg animate-[cartIn_200ms_ease-out] rounded-t-2xl border border-lilac bg-white p-4 shadow-xl sm:rounded-3xl sm:p-6"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -102,17 +102,17 @@ export function CartModal() {
           <span className="text-slate-600">Разом</span>
           <span className="font-semibold text-slate-900">{formatPrice(total)}</span>
         </div>
-        <div className="mt-5 flex gap-3">
+        <div className="mt-4 flex flex-col gap-2 sm:mt-5 sm:flex-row sm:gap-3">
           <button
             onClick={closeModal}
-            className="flex-1 rounded-full border border-lilac px-4 py-2 text-xs text-slate-700"
+            className="flex-1 rounded-full border border-lilac px-4 py-2.5 text-xs text-slate-700"
           >
             Продовжити покупки
           </button>
           <Link
             href="/checkout"
             onClick={closeModal}
-            className="flex-1 rounded-full bg-lilac px-4 py-2 text-center text-xs text-white"
+            className="flex-1 rounded-full bg-lilac px-4 py-2.5 text-center text-xs text-white"
           >
             Зробити замовлення
           </Link>

@@ -107,8 +107,8 @@ export default async function CategoryPage({
   const compact = searchParams.view === "compact";
 
   return (
-    <div className="bg-[var(--lilac-50)]/40 py-6">
-      <div className="mx-auto max-w-7xl px-4 py-6">
+    <div className="bg-[var(--lilac-50)]/40 py-4 sm:py-6">
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:py-6">
         <Breadcrumbs
           items={[
             { title: "Головна", href: "/" },
@@ -116,61 +116,65 @@ export default async function CategoryPage({
             { title: category.name },
           ]}
         />
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 sm:mt-4 sm:gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">{category.name}</h1>
-            <div className="mt-1 text-xs text-slate-500">
+            <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">{category.name}</h1>
+            <div className="mt-1 text-[11px] text-slate-500 sm:text-xs">
               Знайдено {total} товарів · Сторінка {page} з {totalPages}
             </div>
           </div>
-          <div className="flex items-center gap-3">
-          <a
-            href={`?${new URLSearchParams({ ...Object.fromEntries(query), view: "default" }).toString()}`}
-            className={`rounded-full border px-3 py-1 text-xs ${
-              !compact ? "border-lilac bg-lilac text-white" : "border-slate-200 text-slate-600"
-            }`}
-          >
-            Звичайний
-          </a>
-          <a
-            href={`?${new URLSearchParams({ ...Object.fromEntries(query), view: "compact" }).toString()}`}
-            className={`rounded-full border px-3 py-1 text-xs ${
-              compact ? "border-lilac bg-lilac text-white" : "border-slate-200 text-slate-600"
-            }`}
-          >
-            Компактний
-          </a>
-          <Suspense fallback={<span className="text-xs text-slate-400">…</span>}>
-            <CatalogSort />
-          </Suspense>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <a
+              href={`?${new URLSearchParams({ ...Object.fromEntries(query), view: "default" }).toString()}`}
+              className={`hidden rounded-full border px-3 py-1 text-xs sm:inline-flex ${
+                !compact ? "border-lilac bg-lilac text-white" : "border-slate-200 text-slate-600"
+              }`}
+            >
+              Звичайний
+            </a>
+            <a
+              href={`?${new URLSearchParams({ ...Object.fromEntries(query), view: "compact" }).toString()}`}
+              className={`hidden rounded-full border px-3 py-1 text-xs sm:inline-flex ${
+                compact ? "border-lilac bg-lilac text-white" : "border-slate-200 text-slate-600"
+              }`}
+            >
+              Компактний
+            </a>
+            <Suspense fallback={<span className="text-xs text-slate-400">…</span>}>
+              <CatalogSort />
+            </Suspense>
+          </div>
         </div>
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2 text-xs">
-        {[
-          { key: "all", label: "Усі" },
-          { key: "inStock", label: "В наявності" },
-          { key: "1-3", label: "Під замовлення 1–3 дні" },
-          { key: "3-7", label: "Під замовлення 3–7 днів" },
-        ].map((tab) => (
-          <a
-            key={tab.key}
-            href={buildTab(tab.key === "all" || tab.key === "inStock" ? undefined : tab.key, tab.key === "inStock")}
-            className={`rounded-full border px-3 py-1 ${
-              activeLead === tab.key || (tab.key === "inStock" && paramsFilters.inStock === "true")
-                ? "border-lilac bg-lilac text-white"
-                : "border-slate-200 text-slate-600"
-            }`}
-          >
-            {tab.label}
-          </a>
-        ))}
-      </div>
-        <div className="mt-6 grid gap-8 lg:grid-cols-[260px_1fr]">
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1 text-xs sm:mt-4 sm:flex-wrap sm:overflow-visible">
+          {[
+            { key: "all", label: "Усі" },
+            { key: "inStock", label: "В наявності" },
+            { key: "1-3", label: "1–3 дні" },
+            { key: "3-7", label: "3–7 днів" },
+          ].map((tab) => (
+            <a
+              key={tab.key}
+              href={buildTab(tab.key === "all" || tab.key === "inStock" ? undefined : tab.key, tab.key === "inStock")}
+              className={`shrink-0 rounded-full border px-3 py-1 ${
+                activeLead === tab.key || (tab.key === "inStock" && paramsFilters.inStock === "true")
+                  ? "border-lilac bg-lilac text-white"
+                  : "border-slate-200 text-slate-600"
+              }`}
+            >
+              {tab.label}
+            </a>
+          ))}
+        </div>
+        <div className="mt-4 grid gap-4 sm:mt-6 sm:gap-8 lg:grid-cols-[260px_1fr]">
           <aside className="rounded-2xl border border-slate-200/70 bg-white p-4 lg:sticky lg:top-32 lg:h-fit">
-            <div className="text-sm font-semibold text-slate-900">Фільтри</div>
-            <div className="mt-4">
-              <Suspense fallback={<div className="text-xs text-slate-400">Завантаження…</div>}>
-              <CatalogFilters
+            <details className="group lg:[open]" open>
+              <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-slate-900 lg:pointer-events-none">
+                Фільтри
+                <svg className="h-4 w-4 text-slate-400 transition group-open:rotate-180 lg:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </summary>
+              <div className="mt-4">
+                <Suspense fallback={<div className="text-xs text-slate-400">Завантаження…</div>}>
+                <CatalogFilters
                 brands={unique(meta.map((m) => m.brand))}
                 sockets={unique(meta.map((m) => m.socket))}
                 cores={unique(meta.map((m) => m.cores))}
@@ -186,7 +190,8 @@ export default async function CategoryPage({
                 psuCerts={unique(meta.map((m) => m.psuCert))}
               />
               </Suspense>
-            </div>
+              </div>
+            </details>
           </aside>
           <section>
             {products.length === 0 ? (
@@ -195,8 +200,8 @@ export default async function CategoryPage({
               </div>
             ) : (
               <div
-                className={`grid gap-4 ${
-                  compact ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" : "sm:grid-cols-2 lg:grid-cols-3"
+                className={`grid gap-3 sm:gap-4 ${
+                  compact ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" : "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3"
                 }`}
               >
                 {products.map((product) => (

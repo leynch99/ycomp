@@ -38,9 +38,9 @@ export function QuickContactWidget() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6">
       {open && (
-        <div className="mb-3 w-80 rounded-2xl border border-lilac bg-white p-4 shadow-lg">
+        <div className="mb-3 w-[calc(100vw-2rem)] max-w-80 rounded-2xl border border-lilac bg-white p-4 shadow-lg sm:w-80">
           <div className="text-sm font-semibold text-slate-900">Швидкий звʼязок</div>
           <form onSubmit={submit} className="mt-3 space-y-2">
             <input

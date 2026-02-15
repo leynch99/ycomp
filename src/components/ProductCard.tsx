@@ -52,33 +52,33 @@ export function ProductCard({
       </div>
       <Link
         href={`/p/${product.slug}`}
-        className={`mt-4 font-semibold text-slate-900 ${compact ? "text-xs" : "text-sm"}`}
+        className={`mt-2 line-clamp-2 font-semibold text-slate-900 sm:mt-4 ${compact ? "text-[11px] sm:text-xs" : "text-xs sm:text-sm"}`}
       >
         {product.name}
       </Link>
-      <div className="mt-1 text-xs uppercase tracking-wide text-slate-400">{product.brand}</div>
-      <div className="mt-3 flex items-baseline gap-2">
-        <div className={`font-semibold text-slate-900 ${compact ? "text-base" : "text-lg"}`}>
+      <div className="mt-0.5 text-[10px] uppercase tracking-wide text-slate-400 sm:mt-1 sm:text-xs">{product.brand}</div>
+      <div className="mt-2 flex items-baseline gap-1 sm:mt-3 sm:gap-2">
+        <div className={`font-semibold text-slate-900 ${compact ? "text-sm sm:text-base" : "text-sm sm:text-lg"}`}>
           {formatPrice(product.salePrice)}
         </div>
         {product.oldPrice && (
-          <div className="text-xs text-slate-400 line-through">
+          <div className="text-[10px] text-slate-400 line-through sm:text-xs">
             {formatPrice(product.oldPrice)}
           </div>
         )}
       </div>
-      <div className="mt-1 text-xs text-slate-500">Наявність: {leadLabel}</div>
-      {stockLabel && <div className="mt-1 text-xs font-medium text-emerald-700">{stockLabel}</div>}
-      <div className={`mt-auto flex gap-2 ${compact ? "pt-3 text-[11px]" : "pt-4 text-xs"}`}>
+      <div className="mt-0.5 hidden text-xs text-slate-500 sm:block">Наявність: {leadLabel}</div>
+      {stockLabel && <div className="mt-0.5 hidden text-xs font-medium text-emerald-700 sm:block">{stockLabel}</div>}
+      <div className={`mt-auto flex gap-1 sm:gap-2 ${compact ? "pt-2 text-[10px] sm:pt-3 sm:text-[11px]" : "pt-2 text-[10px] sm:pt-4 sm:text-xs"}`}>
         <button
           onClick={() => addItem(product, 1)}
-          className="flex-1 rounded-full bg-lilac px-3 py-2 text-white transition hover:opacity-90"
+          className="flex-1 rounded-full bg-lilac px-2 py-1.5 text-white transition hover:opacity-90 sm:px-3 sm:py-2"
         >
           В кошик
         </button>
         <button
           onClick={() => toggle(product)}
-          className={`rounded-full border px-3 py-2 transition hover:border-lilac hover:text-lilac ${
+          className={`rounded-full border px-2 py-1.5 transition hover:border-lilac hover:text-lilac sm:px-3 sm:py-2 ${
             isInWishlist(product.id) ? "border-lilac text-lilac" : "text-slate-400"
           }`}
         >
@@ -86,7 +86,7 @@ export function ProductCard({
         </button>
         <button
           onClick={() => toggleCompare(product)}
-          className={`rounded-full border px-3 py-2 transition hover:border-lilac hover:text-lilac ${
+          className={`hidden rounded-full border px-2 py-1.5 transition hover:border-lilac hover:text-lilac sm:block sm:px-3 sm:py-2 ${
             isInCompare(product.id) ? "border-lilac text-lilac" : "text-slate-400"
           }`}
         >

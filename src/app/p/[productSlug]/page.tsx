@@ -49,7 +49,7 @@ export default async function ProductPage({ params }: { params: { productSlug: s
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
+    <div className="mx-auto max-w-7xl px-4 py-5 sm:py-8">
       <Breadcrumbs
         items={[
           { title: "Головна", href: "/" },
@@ -58,37 +58,37 @@ export default async function ProductPage({ params }: { params: { productSlug: s
         ]}
       />
       <script type="application/ld+json">{JSON.stringify(schema)}</script>
-      <div className="mt-6 grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="space-y-4">
-          <div className="relative aspect-square overflow-hidden rounded-3xl border border-lilac bg-gradient-to-br from-[var(--lilac-50)] via-white to-[var(--lilac-100)] shadow-sm">
-            <Image src={mainImage.url} alt={product.name} fill className="object-contain p-10" />
+      <div className="mt-4 grid gap-5 sm:mt-6 sm:gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="space-y-3 sm:space-y-4">
+          <div className="relative aspect-square overflow-hidden rounded-2xl border border-lilac bg-gradient-to-br from-[var(--lilac-50)] via-white to-[var(--lilac-100)] shadow-sm sm:rounded-3xl">
+            <Image src={mainImage.url} alt={product.name} fill className="object-contain p-6 sm:p-10" />
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {thumbs.map((img, index) => (
               <div
                 key={`${img.url}-${index}`}
-                className="relative aspect-square overflow-hidden rounded-2xl border border-slate-200/70 bg-white hover:border-[var(--lilac-500)]"
+                className="relative aspect-square overflow-hidden rounded-xl border border-slate-200/70 bg-white hover:border-[var(--lilac-500)] sm:rounded-2xl"
               >
-                <Image src={img.url} alt={product.name} fill className="object-contain p-4" />
+                <Image src={img.url} alt={product.name} fill className="object-contain p-3 sm:p-4" />
               </div>
             ))}
           </div>
         </div>
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <div>
-            <div className="text-xs uppercase tracking-[0.2em] text-slate-400">{product.brand}</div>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400 sm:text-xs">{product.brand}</div>
+            <h1 className="mt-1 text-xl font-semibold tracking-tight text-slate-900 sm:mt-2 sm:text-3xl">
               {product.name}
             </h1>
-            <div className="mt-2 text-xs text-slate-500">SKU: {product.sku}</div>
+            <div className="mt-1 text-[11px] text-slate-500 sm:mt-2 sm:text-xs">SKU: {product.sku}</div>
           </div>
-          <div className="rounded-2xl border border-lilac bg-white p-6 shadow-sm">
+          <div className="rounded-xl border border-lilac bg-white p-4 shadow-sm sm:rounded-2xl sm:p-6">
             <div className="flex items-center gap-3">
-              <div className="text-3xl font-semibold text-slate-900">
+              <div className="text-2xl font-semibold text-slate-900 sm:text-3xl">
                 {formatPrice(product.salePrice)}
               </div>
               {product.oldPrice && (
-                <div className="text-sm text-slate-400 line-through">
+                <div className="text-xs text-slate-400 line-through sm:text-sm">
                   {formatPrice(product.oldPrice)}
                 </div>
               )}
@@ -148,14 +148,14 @@ export default async function ProductPage({ params }: { params: { productSlug: s
         </div>
       </div>
 
-      <section className="mt-12">
+      <section className="mt-8 sm:mt-12">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-slate-900">З цим купують</h2>
+          <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">З цим купують</h2>
           <Link href="/catalog" className="text-xs text-slate-500">
             Дивитися всі
           </Link>
         </div>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-4">
           {upsell.map((item) => (
             <ProductCard
               key={item.id}
@@ -180,14 +180,14 @@ export default async function ProductPage({ params }: { params: { productSlug: s
         </div>
       </section>
 
-      <section className="mt-12">
+      <section className="mt-8 sm:mt-12">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-slate-900">Схожі товари</h2>
+          <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Схожі товари</h2>
           <Link href="/catalog" className="text-xs text-slate-500">
             Дивитися всі
           </Link>
         </div>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-4">
           {similar.map((item) => (
             <ProductCard
               key={item.id}
@@ -212,9 +212,9 @@ export default async function ProductPage({ params }: { params: { productSlug: s
         </div>
       </section>
 
-      <section className="mt-12">
-        <h2 className="text-xl font-semibold text-slate-900">Відгуки</h2>
-        <div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="mt-8 sm:mt-12">
+        <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Відгуки</h2>
+        <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-2xl border border-slate-200/70 bg-white p-6 text-sm text-slate-600">
             Скоро тут зʼявляться відгуки покупців.
           </div>
