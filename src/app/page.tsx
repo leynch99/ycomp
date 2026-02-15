@@ -1,10 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/ProductCard";
 import { formatPrice } from "@/lib/utils";
 
 export default async function Home() {
-  const [hits, deals, categories] = await Promise.all([
+  const [hits, deals, categories, heroBanners, tileBanners] = await Promise.all([
     prisma.product.findMany({
       take: 8,
       orderBy: { popularity: "desc" },
@@ -19,6 +20,16 @@ export default async function Home() {
       where: { parentId: null },
       orderBy: { name: "asc" },
       take: 8,
+    }),
+    prisma.banner.findMany({
+      where: { type: "hero", isActive: true },
+      orderBy: { position: "asc" },
+      take: 1,
+    }),
+    prisma.banner.findMany({
+      where: { type: "tile", isActive: true },
+      orderBy: { position: "asc" },
+      take: 4,
     }),
   ]);
 
@@ -35,77 +46,159 @@ export default async function Home() {
     { title: "Швидка підтримка", text: "Консультації по телефону та в чаті." },
   ];
 
+  const hero = heroBanners[0] ?? null;
+  const hasBanners = hero || tileBanners.length > 0;
+
   return (
     <div className="space-y-12 sm:space-y-20">
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-white via-[var(--lilac-50)] to-white py-6 sm:py-10">
-        <div className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-[var(--lilac-100)] blur-3xl" />
-        <div className="pointer-events-none absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-[var(--lilac-100)] blur-3xl" />
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="grid gap-6 rounded-2xl border border-lilac bg-gradient-to-br from-[var(--lilac-50)] via-white to-[var(--lilac-100)] p-5 shadow-sm sm:gap-8 sm:rounded-3xl sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="space-y-4 sm:space-y-6">
-              <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400 sm:text-xs">ycomp.ua</div>
-              <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
-                Інтернет-магазин компʼютерних комплектуючих
-              </h1>
-              <p className="text-sm text-slate-600 sm:text-base">
-                Швидкий підбір, перевірка сумісності, доставка Новою Поштою та сервіс.
-              </p>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/configurator"
-                  className="rounded-full bg-lilac px-5 py-2.5 text-center text-sm text-white transition hover:opacity-90 sm:px-6 sm:py-3"
-                >
-                  Зібрати ПК
-                </Link>
-                <Link
-                  href="/catalog"
-                  className="rounded-full border border-lilac px-5 py-2.5 text-center text-sm text-slate-700 transition hover:border-[var(--lilac-500)] hover:text-[var(--lilac-900)] sm:px-6 sm:py-3"
-                >
-                  Підібрати апгрейд
-                </Link>
+      {/* Hero Banners */}
+      {hasBanners ? (
+        <section className="mx-auto max-w-7xl px-4 pt-4 sm:pt-8">
+          <div className="grid gap-3 sm:gap-4 lg:grid-cols-[1.6fr_1fr]">
+            {/* Large hero banner */}
+            {hero ? (
+              <Link
+                href={hero.linkUrl}
+                className="group relative flex min-h-[220px] items-end overflow-hidden rounded-2xl sm:min-h-[340px] sm:rounded-3xl lg:row-span-2 lg:min-h-[420px]"
+              >
+                <Image
+                  src={hero.imageUrl}
+                  alt={hero.title}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  unoptimized
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="relative z-10 p-5 sm:p-8">
+                  {hero.subtitle && (
+                    <div className="mb-2 text-xs font-medium uppercase tracking-widest text-white/80 sm:text-sm">
+                      {hero.subtitle}
+                    </div>
+                  )}
+                  <h2 className="text-xl font-bold text-white sm:text-3xl lg:text-4xl">
+                    {hero.title}
+                  </h2>
+                  <span className="mt-3 inline-flex rounded-full bg-white/20 px-4 py-2 text-xs font-medium text-white backdrop-blur-sm transition hover:bg-white/30 sm:mt-4 sm:text-sm">
+                    Перейти →
+                  </span>
+                </div>
+              </Link>
+            ) : (
+              <div className="rounded-2xl bg-gradient-to-br from-[var(--lilac-100)] to-[var(--lilac-50)] p-8 lg:row-span-2">
+                <h2 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
+                  Інтернет-магазин компʼютерних комплектуючих
+                </h2>
+                <p className="mt-3 text-sm text-slate-600">
+                  Швидкий підбір, доставка Новою Поштою та сервіс.
+                </p>
               </div>
-              <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                {[
-                  { value: "50k+", label: "товарів" },
-                  { value: "1–3", label: "дні доставки" },
-                  { value: "14 днів", label: "на повернення" },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-xl border border-white/60 bg-white/70 px-3 py-2 sm:rounded-2xl sm:px-4 sm:py-3">
-                    <div className="text-sm font-semibold text-slate-900 sm:text-lg">{item.value}</div>
-                    <div className="text-[10px] text-slate-500 sm:text-xs">{item.label}</div>
-                  </div>
+            )}
+
+            {/* Tile grid */}
+            {tileBanners.length > 0 && (
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                {tileBanners.map((tile) => (
+                  <Link
+                    key={tile.id}
+                    href={tile.linkUrl}
+                    className="group relative flex min-h-[100px] items-end overflow-hidden rounded-xl sm:min-h-[160px] sm:rounded-2xl"
+                  >
+                    <Image
+                      src={tile.imageUrl}
+                      alt={tile.title}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      unoptimized
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                    <div className="relative z-10 p-3 sm:p-4">
+                      <div className="text-xs font-semibold text-white sm:text-sm lg:text-base">
+                        {tile.title}
+                      </div>
+                      {tile.subtitle && (
+                        <div className="mt-0.5 text-[10px] text-white/70 sm:text-xs">
+                          {tile.subtitle}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
                 ))}
               </div>
-            </div>
-            <div className="hidden rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-lilac sm:block">
-              <div className="text-sm font-medium text-slate-700">Пошук комплектуючих</div>
-              <div className="mt-4 rounded-2xl border border-lilac bg-white p-5">
-                <div className="text-xs uppercase text-slate-400">Популярні запити</div>
-                <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                  {["RTX 4070", "Ryzen 7", "DDR5 32GB", "NVMe 1TB"].map((q) => (
-                    <Link
-                      key={q}
-                      href={`/catalog?q=${encodeURIComponent(q)}`}
-                      className="rounded-full border border-slate-200 px-3 py-1 text-slate-600 transition hover:border-[var(--lilac-500)] hover:text-[var(--lilac-900)]"
-                    >
-                      {q}
-                    </Link>
+            )}
+          </div>
+        </section>
+      ) : (
+        /* Static fallback hero when no banners exist */
+        <section className="relative overflow-hidden bg-gradient-to-br from-white via-[var(--lilac-50)] to-white py-6 sm:py-10">
+          <div className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-[var(--lilac-100)] blur-3xl" />
+          <div className="pointer-events-none absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-[var(--lilac-100)] blur-3xl" />
+          <div className="mx-auto max-w-7xl px-4">
+            <div className="grid gap-6 rounded-2xl border border-lilac bg-gradient-to-br from-[var(--lilac-50)] via-white to-[var(--lilac-100)] p-5 shadow-sm sm:gap-8 sm:rounded-3xl sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400 sm:text-xs">ycomp.ua</div>
+                <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+                  Інтернет-магазин компʼютерних комплектуючих
+                </h1>
+                <p className="text-sm text-slate-600 sm:text-base">
+                  Швидкий підбір, перевірка сумісності, доставка Новою Поштою та сервіс.
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    href="/configurator"
+                    className="rounded-full bg-lilac px-5 py-2.5 text-center text-sm text-white transition hover:opacity-90 sm:px-6 sm:py-3"
+                  >
+                    Зібрати ПК
+                  </Link>
+                  <Link
+                    href="/catalog"
+                    className="rounded-full border border-lilac px-5 py-2.5 text-center text-sm text-slate-700 transition hover:border-[var(--lilac-500)] hover:text-[var(--lilac-900)] sm:px-6 sm:py-3"
+                  >
+                    Підібрати апгрейд
+                  </Link>
+                </div>
+                <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                  {[
+                    { value: "50k+", label: "товарів" },
+                    { value: "1–3", label: "дні доставки" },
+                    { value: "14 днів", label: "на повернення" },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-xl border border-white/60 bg-white/70 px-3 py-2 sm:rounded-2xl sm:px-4 sm:py-3">
+                      <div className="text-sm font-semibold text-slate-900 sm:text-lg">{item.value}</div>
+                      <div className="text-[10px] text-slate-500 sm:text-xs">{item.label}</div>
+                    </div>
                   ))}
                 </div>
               </div>
-              <div className="mt-6 grid gap-3 text-sm">
-                <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-slate-700">
-                  Підбір апгрейду за 10 хвилин
+              <div className="hidden rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-lilac sm:block">
+                <div className="text-sm font-medium text-slate-700">Пошук комплектуючих</div>
+                <div className="mt-4 rounded-2xl border border-lilac bg-white p-5">
+                  <div className="text-xs uppercase text-slate-400">Популярні запити</div>
+                  <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                    {["RTX 4070", "Ryzen 7", "DDR5 32GB", "NVMe 1TB"].map((q) => (
+                      <Link
+                        key={q}
+                        href={`/catalog?q=${encodeURIComponent(q)}`}
+                        className="rounded-full border border-slate-200 px-3 py-1 text-slate-600 transition hover:border-[var(--lilac-500)] hover:text-[var(--lilac-900)]"
+                      >
+                        {q}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-slate-700">
-                  Trade-in і сервіс
+                <div className="mt-6 grid gap-3 text-sm">
+                  <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-slate-700">
+                    Підбір апгрейду за 10 хвилин
+                  </div>
+                  <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-slate-700">
+                    Trade-in і сервіс
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Bestsellers */}
       <section className="bg-white py-4">

@@ -11,6 +11,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     ["/admin/trade-in", "Trade-in заявки"],
     ["/admin/service", "Сервіс заявки"],
     ["/admin/contacts", "Швидкий звʼязок"],
+    ["/admin/banners", "Банери"],
     ["/admin/content", "Контент"],
   ];
 

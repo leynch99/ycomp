@@ -47,6 +47,7 @@ const randomFrom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 async function main() {
+  await prisma.banner.deleteMany();
   await prisma.supplierPayout.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
@@ -188,6 +189,59 @@ async function main() {
       { cityId: dnipro.id, name: "Відділення №22", address: "вул. Набережна Перемоги, 12" },
     ],
   });
+
+  // --- Banners ---
+  await prisma.banner.createMany({
+    data: [
+      {
+        type: "hero",
+        title: "Знижки до -40% на процесори",
+        subtitle: "Тільки цього тижня",
+        imageUrl: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=1200&h=600&fit=crop",
+        linkUrl: "/catalog?deal=true",
+        position: 0,
+        isActive: true,
+      },
+      {
+        type: "tile",
+        title: "Компʼютери",
+        subtitle: "Готові збірки",
+        imageUrl: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=600&h=400&fit=crop",
+        linkUrl: "/c/cases",
+        position: 0,
+        isActive: true,
+      },
+      {
+        type: "tile",
+        title: "Ноутбуки",
+        subtitle: "Для роботи та ігор",
+        imageUrl: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&h=400&fit=crop",
+        linkUrl: "/catalog?q=laptop",
+        position: 1,
+        isActive: true,
+      },
+      {
+        type: "tile",
+        title: "Товари для блекауту",
+        subtitle: "UPS та генератори",
+        imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&h=400&fit=crop",
+        linkUrl: "/c/psu",
+        position: 2,
+        isActive: true,
+      },
+      {
+        type: "tile",
+        title: "Послуги та сервіс",
+        subtitle: "Діагностика, збірка",
+        imageUrl: "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=600&h=400&fit=crop",
+        linkUrl: "/service",
+        position: 3,
+        isActive: true,
+      },
+    ],
+  });
+
+  console.log("Seeded banners: 1 hero + 4 tiles");
 }
 
 main()
