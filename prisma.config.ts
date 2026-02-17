@@ -10,6 +10,12 @@ if (!databaseUrl) {
   );
 }
 
+// Prisma Migrate requires DIRECT connection — Neon pooler (-pooler) does not support advisory locks.
+// Convert pooled URL to direct: ep-xxx-pooler.region... → ep-xxx.region...
+const migrateUrl =
+  process.env["DIRECT_DATABASE_URL"] ||
+  (databaseUrl.includes("-pooler.") ? databaseUrl.replace("-pooler.", ".") : databaseUrl);
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
@@ -17,6 +23,6 @@ export default defineConfig({
     seed: "node prisma/seed.mjs",
   },
   datasource: {
-    url: databaseUrl,
+    url: migrateUrl,
   },
 });
