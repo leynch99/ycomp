@@ -4,17 +4,21 @@ import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
 const databaseUrl = process.env["DATABASE_URL"];
-if (!databaseUrl) {
+const isMigrate = process.argv.some((a) => a === "migrate" || a === "deploy");
+
+// prisma generate does not need a DB connection; migrate does
+if (!databaseUrl && isMigrate) {
   throw new Error(
-    "DATABASE_URL is not set. Add it in Vercel → Project Settings → Environment Variables (Production, Preview, Development)."
+    "DATABASE_URL is not set. Add it in Vercel → Project Settings → Environment Variables, and enable it for Production, Preview, and Development."
   );
 }
 
 // Prisma Migrate requires DIRECT connection — Neon pooler (-pooler) does not support advisory locks.
 // Convert pooled URL to direct: ep-xxx-pooler.region... → ep-xxx.region...
-const migrateUrl =
-  process.env["DIRECT_DATABASE_URL"] ||
-  (databaseUrl.includes("-pooler.") ? databaseUrl.replace("-pooler.", ".") : databaseUrl);
+const migrateUrl = databaseUrl
+  ? process.env["DIRECT_DATABASE_URL"] ||
+    (databaseUrl.includes("-pooler.") ? databaseUrl.replace("-pooler.", ".") : databaseUrl)
+  : "postgresql://localhost:5432/dummy"; // placeholder for generate only
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

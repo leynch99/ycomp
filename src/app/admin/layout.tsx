@@ -1,6 +1,13 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSessionUser } from "@/lib/auth";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const user = await getSessionUser();
+  if (!user || user.role !== "ADMIN") {
+    redirect("/account");
+  }
+
   const links = [
     ["/admin", "Панель"],
     ["/admin/orders", "Замовлення"],

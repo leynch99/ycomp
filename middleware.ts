@@ -12,10 +12,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/account", request.url));
   }
   try {
-    const payload = await verifySession(token);
-    if (payload.role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/account", request.url));
-    }
+    await verifySession(token);
+    // Role check moved to admin layout — uses fresh DB data so promotion takes effect immediately
   } catch {
     return NextResponse.redirect(new URL("/account", request.url));
   }

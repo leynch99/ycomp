@@ -63,6 +63,15 @@ export function AccountClient({ user }: { user?: User }) {
             <div className="text-sm text-slate-600">
               <div className="font-medium text-slate-900">{user.name || user.email}</div>
               <div className="mt-1 text-xs">{user.email}</div>
+              <div className="mt-1 text-xs text-slate-400">Роль: {user.role}</div>
+              {user.role === "ADMIN" && (
+                <a
+                  href="/admin"
+                  className="mt-2 inline-block text-xs text-lilac hover:underline"
+                >
+                  → Адмін-панель
+                </a>
+              )}
             </div>
             <button
               type="button"
