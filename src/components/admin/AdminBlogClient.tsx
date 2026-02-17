@@ -11,7 +11,7 @@ type BlogPost = {
   body: string;
   imageUrl: string | null;
   isPublished: boolean;
-  createdAt: string;
+  createdAt: Date | string;
 };
 
 const EMPTY = {
