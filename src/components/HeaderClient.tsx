@@ -271,6 +271,7 @@ export function HeaderClient({
                 ["/trade-in", t(lang, "tradeIn")],
                 ["/service", t(lang, "service")],
                 ["/configurator", t(lang, "configurator")],
+                ["/blog", t(lang, "blog")],
               ].map(([href, label]) => (
                 <Link
                   key={href}

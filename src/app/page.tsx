@@ -5,7 +5,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { formatPrice } from "@/lib/utils";
 
 export default async function Home() {
-  const [hits, deals, categories, heroBanners, tileBanners] = await Promise.all([
+  const [hits, deals, categories, heroBanners, tileBanners, latestPost] = await Promise.all([
     prisma.product.findMany({
       take: 8,
       orderBy: { popularity: "desc" },
@@ -30,6 +30,10 @@ export default async function Home() {
       where: { type: "tile", isActive: true },
       orderBy: { position: "asc" },
       take: 4,
+    }),
+    prisma.blogPost.findFirst({
+      where: { isPublished: true },
+      orderBy: { createdAt: "desc" },
     }),
   ]);
 
@@ -338,12 +342,27 @@ export default async function Home() {
 
       {/* Blog */}
       <section className="mx-auto max-w-7xl px-4 pb-8 sm:pb-16">
-        <div className="rounded-2xl border border-lilac bg-gradient-to-br from-[var(--lilac-900)] to-[var(--lilac-700)] p-6 text-white sm:rounded-3xl sm:p-8">
+        <Link
+          href={latestPost ? `/blog/${latestPost.slug}` : "/blog"}
+          className="block rounded-2xl border border-lilac bg-gradient-to-br from-[var(--lilac-900)] to-[var(--lilac-700)] p-6 text-white transition hover:opacity-95 sm:rounded-3xl sm:p-8"
+        >
           <div className="text-xs text-slate-300 sm:text-sm">Блог / гайди</div>
-          <div className="mt-2 text-lg font-semibold sm:mt-3 sm:text-2xl">
-            Скоро додамо огляди, гайди та збірки
-          </div>
-        </div>
+          {latestPost ? (
+            <>
+              <div className="mt-2 text-lg font-semibold sm:mt-3 sm:text-2xl">
+                {latestPost.title}
+              </div>
+              {latestPost.excerpt && (
+                <p className="mt-2 line-clamp-2 text-sm text-white/80">{latestPost.excerpt}</p>
+              )}
+              <span className="mt-4 inline-block text-xs text-white/70">Читати далі →</span>
+            </>
+          ) : (
+            <div className="mt-2 text-lg font-semibold sm:mt-3 sm:text-2xl">
+              Огляди, гайди та готові збірки
+            </div>
+          )}
+        </Link>
       </section>
     </div>
   );

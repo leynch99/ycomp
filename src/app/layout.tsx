@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Providers } from "@/components/providers/Providers";
 import { QuickContactWidget } from "@/components/QuickContactWidget";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 
 export const runtime = "nodejs";
 
@@ -18,20 +19,31 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ycomp.ua";
+
 export const metadata: Metadata = {
-  title: "ycomp.ua — Інтернет-магазин компʼютерних комплектуючих",
+  title: {
+    default: "YComp — Інтернет-магазин компʼютерних комплектуючих",
+    template: "%s | YComp",
+  },
   description:
-    "Комплектуючі, готові ПК та сервіс. Доставка по Україні, гарантія та професійна консультація.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+    "Компʼютерні комплектуючі, конфігуратор ПК, сервіс та trade-in. Доставка Новою Поштою по Україні, гарантія та професійна консультація.",
+  metadataBase: new URL(siteUrl),
   openGraph: {
-    title: "ycomp.ua — Комплектуючі та сервіс",
+    title: "YComp — Комплектуючі та сервіс",
     description:
       "Сучасні комплектуючі, конфігуратор ПК, сервіс та trade-in. Доставка Новою Поштою.",
     url: "/",
-    siteName: "ycomp.ua",
+    siteName: "YComp",
     locale: "uk_UA",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "YComp — Комплектуючі та сервіс",
+    description: "Сучасні комплектуючі, конфігуратор ПК, сервіс та trade-in.",
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({
@@ -43,17 +55,34 @@ export default function RootLayout({
     <html lang="uk">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
+          <GoogleAnalytics />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                name: "YComp",
+                url: siteUrl,
+                potentialAction: {
+                  "@type": "SearchAction",
+                  target: { "@type": "EntryPoint", urlTemplate: `${siteUrl}/catalog?q={search_term_string}` },
+                  "query-input": "required name=search_term_string",
+                },
+              }),
+            }}
+          />
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
               __html: JSON.stringify({
                 "@context": "https://schema.org",
                 "@type": "Organization",
-                name: "ycomp.ua",
-                url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+                name: "YComp",
+                url: siteUrl,
+                logo: `${siteUrl}/logo.png`,
                 contactPoint: {
                   "@type": "ContactPoint",
-                  telephone: "+38-044-200-12-34",
                   contactType: "customer service",
                 },
               }),

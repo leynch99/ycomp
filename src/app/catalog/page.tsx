@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { buildOrderBy, buildWhere } from "@/lib/catalog";
@@ -7,6 +8,12 @@ import { CatalogFilters } from "@/components/CatalogFilters";
 import { CatalogSort } from "@/components/CatalogSort";
 import { Pagination } from "@/components/Pagination";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+
+export const metadata: Metadata = {
+  title: "Каталог",
+  description: "Компʼютерні комплектуючі — процесори, відеокарти, материнські плати, RAM, SSD. Підбір за параметрами.",
+  openGraph: { title: "Каталог | YComp", url: "/catalog" },
+};
 
 export default async function CatalogPage({
   searchParams,

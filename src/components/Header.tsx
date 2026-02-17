@@ -26,6 +26,7 @@ export async function Header() {
             <Link href="/trade-in">{t(lang, "tradeIn")}</Link>
             <Link href="/service">{t(lang, "service")}</Link>
             <Link href="/configurator">{t(lang, "configurator")}</Link>
+            <Link href="/blog">{t(lang, "blog")}</Link>
           </nav>
           <Link
             href="/contacts"

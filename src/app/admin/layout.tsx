@@ -12,6 +12,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     ["/admin/service", "Сервіс заявки"],
     ["/admin/contacts", "Швидкий звʼязок"],
     ["/admin/banners", "Банери"],
+    ["/admin/blog", "Блог"],
     ["/admin/content", "Контент"],
   ];
 

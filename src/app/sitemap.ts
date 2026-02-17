@@ -3,13 +3,15 @@ import { prisma } from "@/lib/prisma";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const [categories, products] = await Promise.all([
+  const [categories, products, blogPosts] = await Promise.all([
     prisma.category.findMany({ select: { slug: true } }),
     prisma.product.findMany({ select: { slug: true } }),
+    prisma.blogPost.findMany({ where: { isPublished: true }, select: { slug: true } }),
   ]);
 
   const routes = [
     "/",
+    "/blog",
     "/catalog",
     "/deals",
     "/outlet",
@@ -40,6 +42,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     ...products.map((product) => ({
       url: `${baseUrl}/p/${product.slug}`,
+      lastModified: new Date(),
+    })),
+    ...blogPosts.map((post) => ({
+      url: `${baseUrl}/blog/${post.slug}`,
       lastModified: new Date(),
     })),
   ];

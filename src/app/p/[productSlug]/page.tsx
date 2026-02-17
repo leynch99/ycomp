@@ -1,14 +1,41 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { ProductCard } from "@/components/ProductCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { absoluteUrl } from "@/lib/seo";
 import { notFound } from "next/navigation";
 
-export default async function ProductPage({ params }: { params: { productSlug: string } }) {
+type Props = { params: Promise<{ productSlug: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { productSlug } = await params;
   const product = await prisma.product.findUnique({
-    where: { slug: params.productSlug },
+    where: { slug: productSlug },
+    include: { images: { orderBy: { position: "asc" }, take: 1 } },
+  });
+  if (!product) return {};
+  const image = product.images[0]?.url ?? "/images/placeholder.svg";
+  const desc = product.description.slice(0, 160).replace(/\s+/g, " ").trim();
+  return {
+    title: `${product.name} — ${product.brand}`,
+    description: desc,
+    openGraph: {
+      title: `${product.name} | YComp`,
+      description: desc,
+      url: `/p/${product.slug}`,
+      images: [{ url: image.startsWith("http") ? image : absoluteUrl(image), alt: product.name }],
+      type: "website",
+    },
+  };
+}
+
+export default async function ProductPage({ params }: Props) {
+  const { productSlug } = await params;
+  const product = await prisma.product.findUnique({
+    where: { slug: productSlug },
     include: {
       images: { orderBy: { position: "asc" } },
       category: true,
@@ -33,19 +60,32 @@ export default async function ProductPage({ params }: { params: { productSlug: s
   const mainImage = images[0];
   const thumbs = images.slice(1, 4);
 
-  const schema = {
+  const productUrl = absoluteUrl(`/p/${product.slug}`);
+  const imageUrl = mainImage.url.startsWith("http") ? mainImage.url : absoluteUrl(mainImage.url);
+  const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
     sku: product.sku,
+    description: product.description.slice(0, 500),
     brand: { "@type": "Brand", name: product.brand },
+    image: imageUrl,
     offers: {
       "@type": "Offer",
       priceCurrency: "UAH",
       price: product.salePrice,
       availability: product.inStock ? "https://schema.org/InStock" : "https://schema.org/PreOrder",
-      url: `/p/${product.slug}`,
+      url: productUrl,
     },
+  };
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Головна", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: product.category.name, item: absoluteUrl(`/c/${product.category.slug}`) },
+      { "@type": "ListItem", position: 3, name: product.name },
+    ],
   };
 
   return (
@@ -57,7 +97,8 @@ export default async function ProductPage({ params }: { params: { productSlug: s
           { title: product.name },
         ]}
       />
-      <script type="application/ld+json">{JSON.stringify(schema)}</script>
+      <script type="application/ld+json">{JSON.stringify(productSchema)}</script>
+      <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
       <div className="mt-4 grid gap-5 sm:mt-6 sm:gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-3 sm:space-y-4">
           <div className="relative aspect-square overflow-hidden rounded-2xl border border-lilac bg-gradient-to-br from-[var(--lilac-50)] via-white to-[var(--lilac-100)] shadow-sm sm:rounded-3xl">

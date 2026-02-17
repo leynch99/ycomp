@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { buildOrderBy, buildWhere } from "@/lib/catalog";
@@ -7,18 +8,35 @@ import { CatalogFilters } from "@/components/CatalogFilters";
 import { CatalogSort } from "@/components/CatalogSort";
 import { Pagination } from "@/components/Pagination";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { absoluteUrl } from "@/lib/seo";
 import { notFound } from "next/navigation";
 
-export default async function CategoryPage({
-  params,
-  searchParams,
-}: {
+type Props = {
   params: Promise<{ categorySlug: string }>;
   searchParams: Record<string, string | string[] | undefined>;
-}) {
-  const resolvedParams = await params;
+};
+
+export async function generateMetadata({ params }: { params: Promise<{ categorySlug: string }> }): Promise<Metadata> {
+  const { categorySlug } = await params;
+  const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
+  if (!category) return {};
+  const desc = category.description?.slice(0, 160) ?? `${category.name} — компʼютерні комплектуючі в YComp`;
+  return {
+    title: category.name,
+    description: desc,
+    openGraph: {
+      title: `${category.name} | YComp`,
+      description: desc,
+      url: `/c/${category.slug}`,
+      type: "website",
+    },
+  };
+}
+
+export default async function CategoryPage({ params, searchParams }: Props) {
+  const { categorySlug } = await params;
   const category = await prisma.category.findUnique({
-    where: { slug: resolvedParams.categorySlug },
+    where: { slug: categorySlug },
   });
   if (!category) return notFound();
 
@@ -106,9 +124,28 @@ export default async function CategoryPage({
 
   const compact = searchParams.view === "compact";
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Головна", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "Каталог", item: absoluteUrl("/catalog") },
+      { "@type": "ListItem", position: 3, name: category.name, item: absoluteUrl(`/c/${category.slug}`) },
+    ],
+  };
+  const collectionSchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: category.name,
+    description: category.description ?? `${category.name} — компʼютерні комплектуючі`,
+    url: absoluteUrl(`/c/${category.slug}`),
+  };
+
   return (
     <div className="bg-[var(--lilac-50)]/40 py-4 sm:py-6">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:py-6">
+        <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
+        <script type="application/ld+json">{JSON.stringify(collectionSchema)}</script>
         <Breadcrumbs
           items={[
             { title: "Головна", href: "/" },
