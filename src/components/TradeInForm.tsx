@@ -14,7 +14,7 @@ export function TradeInForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    setStatus(res.ok ? "Заявку надіслано" : "Помилка");
+    setStatus(res.ok ? "Заявку надіслано" : res.status === 429 ? "Забагато спроб. Спробуйте через хвилину." : "Помилка");
     if (res.ok) event.currentTarget.reset();
   };
 

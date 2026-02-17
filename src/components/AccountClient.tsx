@@ -31,7 +31,9 @@ export function AccountClient() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    setMessage(res.ok ? "Успішно" : "Помилка");
+    if (res.ok) setMessage("Успішно");
+    else if (res.status === 429) setMessage("Забагато спроб. Спробуйте через хвилину.");
+    else setMessage("Помилка");
   };
 
   return (

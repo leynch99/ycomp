@@ -30,7 +30,7 @@ export function QuickContactWidget() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...payload, phone: normalized }),
     });
-    setStatus(res.ok ? "Запит надіслано" : "Помилка");
+    setStatus(res.ok ? "Запит надіслано" : res.status === 429 ? "Забагато спроб. Спробуйте через хвилину." : "Помилка");
     if (res.ok) {
       event.currentTarget.reset();
       setPhoneValue("");

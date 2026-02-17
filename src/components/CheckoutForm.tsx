@@ -11,6 +11,7 @@ export function CheckoutForm() {
   const { items, total, clear } = useCart();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [regions, setRegions] = useState<string[]>([]);
   const [region, setRegion] = useState("");
   const [cityQuery, setCityQuery] = useState("");
@@ -23,6 +24,7 @@ export function CheckoutForm() {
     event.preventDefault();
     setLoading(true);
     setSuccess(null);
+    setError(null);
     const formData = new FormData(event.currentTarget);
     const payload = Object.fromEntries(formData.entries());
     const selectedBranch = branches.find((b) => b.id === branchId);
@@ -47,6 +49,10 @@ export function CheckoutForm() {
       setCityId(null);
       setBranches([]);
       setBranchId("");
+    } else if (res.status === 429) {
+      setError("Забагато спроб. Спробуйте через хвилину.");
+    } else {
+      setError("Помилка оформлення. Спробуйте ще раз.");
     }
     setLoading(false);
   };
@@ -220,6 +226,11 @@ export function CheckoutForm() {
         {success && (
           <div className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
             Замовлення №{success} створено. Менеджер звʼяжеться з вами.
+          </div>
+        )}
+        {error && (
+          <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+            {error}
           </div>
         )}
       </aside>
