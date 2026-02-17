@@ -5,8 +5,8 @@ import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
-  const { ok } = await rateLimit(`register:${ip}`, 3, 60_000);
-  if (!ok) return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
+  const { ok: allowed } = await rateLimit(`register:${ip}`, 3, 60_000);
+  if (!allowed) return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
 
   const body = await request.json();
   const email = String(body?.email ?? "").trim().toLowerCase().slice(0, 255);
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   }
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) return NextResponse.json({ error: "exists" }, { status: 400 });
-  const passwordHash = await hashPassword(body.password);
+  const passwordHash = await hashPassword(password);
   const user = await prisma.user.create({
     data: { email, passwordHash, name: name || undefined },
   });

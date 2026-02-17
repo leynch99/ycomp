@@ -5,8 +5,8 @@ import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
-  const { ok } = await rateLimit(`login:${ip}`, 5, 60_000);
-  if (!ok) return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
+  const { ok: allowed } = await rateLimit(`login:${ip}`, 5, 60_000);
+  if (!allowed) return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
 
   const body = await request.json();
   const email = String(body?.email ?? "").trim().slice(0, 255);
