@@ -1,16 +1,20 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getLang, t } from "@/lib/i18n";
+import { getSessionUser } from "@/lib/auth";
 import { HeaderClient } from "@/components/HeaderClient";
 import { QuickContactButton } from "@/components/QuickContactButton";
 
 export async function Header() {
-  const lang = await getLang();
-  const categories = await prisma.category.findMany({
-    where: { parentId: null },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, slug: true },
-  });
+  const [lang, categories, user] = await Promise.all([
+    getLang(),
+    prisma.category.findMany({
+      where: { parentId: null },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, slug: true },
+    }),
+    getSessionUser(),
+  ]);
 
   return (
     <header className="sticky top-0 z-40 bg-white">
@@ -19,7 +23,7 @@ export async function Header() {
           <Link href="/" className="text-base font-semibold tracking-tight text-slate-900 sm:text-lg">
             YComp
           </Link>
-          <HeaderClient lang={lang} categories={categories} />
+          <HeaderClient lang={lang} categories={categories} user={user} />
           <nav className="ml-auto hidden items-center gap-4 text-xs text-slate-600 lg:flex">
             <Link href="/deals">{t(lang, "deals")}</Link>
             <Link href="/outlet">{t(lang, "outlet")}</Link>

@@ -10,7 +10,9 @@ type OrderSummary = {
   createdAt: string;
 };
 
-export function AccountClient() {
+type User = { id: string; email: string; name: string | null; role: string } | null;
+
+export function AccountClient({ user }: { user?: User }) {
   const [tab, setTab] = useState<"login" | "register">("login");
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [message, setMessage] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export function AccountClient() {
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setMessage("Успішно");
-        window.location.reload();
+        window.location.href = "/";
         return;
       }
       if (res.status === 429) {
@@ -56,6 +58,25 @@ export function AccountClient() {
   return (
     <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
       <div className="rounded-2xl border border-slate-200/70 bg-white p-6">
+        {user ? (
+          <div className="space-y-4">
+            <div className="text-sm text-slate-600">
+              <div className="font-medium text-slate-900">{user.name || user.email}</div>
+              <div className="mt-1 text-xs">{user.email}</div>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                await fetch("/api/auth/logout", { method: "POST" });
+                window.location.href = "/";
+              }}
+              className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:border-[var(--lilac-500)]"
+            >
+              Вийти
+            </button>
+          </div>
+        ) : (
+          <>
         <div className="flex gap-2 text-sm">
           <button
             onClick={() => setTab("login")}
@@ -126,6 +147,8 @@ export function AccountClient() {
           </form>
         )}
         {message && <div className="mt-3 text-xs text-slate-500">{message}</div>}
+          </>
+        )}
       </div>
       <div className="rounded-2xl border border-slate-200/70 bg-white p-6">
         <div className="text-sm font-semibold text-slate-900">Мої замовлення</div>

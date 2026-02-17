@@ -13,12 +13,21 @@ type Category = {
   slug: string;
 };
 
+type User = {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+} | null;
+
 export function HeaderClient({
   categories,
   lang,
+  user,
 }: {
   categories: Category[];
   lang: Lang;
+  user?: User;
 }) {
   const { items: cartItems } = useCart();
   const { items: wishItems } = useWishlist();
@@ -156,12 +165,33 @@ export function HeaderClient({
         <IconLink href="/wishlist" label={t(lang, "wishlist")} badge={wishItems.length} icon="♥" />
         <IconLink href="/compare" label={t(lang, "compare")} badge={compareItems.length} icon="⇄" />
         <IconLink href="/cart" label={t(lang, "cart")} badge={cartItems.length} icon="🛒" />
-        <Link
-          href="/account"
-          className="rounded-full border border-slate-200 px-3 py-1 text-slate-600 hover:border-[var(--lilac-500)] hover:text-[var(--lilac-900)]"
-        >
-          {t(lang, "account")}
-        </Link>
+        {user ? (
+          <>
+            <Link
+              href="/account"
+              className="rounded-full border border-slate-200 px-3 py-1 text-slate-600 hover:border-[var(--lilac-500)] hover:text-[var(--lilac-900)]"
+            >
+              {user.name || user.email}
+            </Link>
+            <button
+              type="button"
+              onClick={async () => {
+                await fetch("/api/auth/logout", { method: "POST" });
+                window.location.href = "/";
+              }}
+              className="rounded-full border border-slate-200 px-3 py-1 text-slate-600 hover:border-[var(--lilac-500)] hover:text-[var(--lilac-900)]"
+            >
+              Вийти
+            </button>
+          </>
+        ) : (
+          <Link
+            href="/account"
+            className="rounded-full border border-slate-200 px-3 py-1 text-slate-600 hover:border-[var(--lilac-500)] hover:text-[var(--lilac-900)]"
+          >
+            {t(lang, "account")}
+          </Link>
+        )}
       </div>
 
       {/* Mobile action bar */}
@@ -298,8 +328,22 @@ export function HeaderClient({
               </Link>
               <Link href="/account" onClick={() => setMobileMenu(false)} className="flex flex-col items-center gap-1 rounded-xl border border-slate-200 py-3 text-slate-600">
                 <span className="text-base">👤</span>
-                <span className="text-[10px]">{t(lang, "account")}</span>
+                <span className="text-[10px]">{user ? (user.name || "Профіль") : t(lang, "account")}</span>
               </Link>
+              {user && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setMobileMenu(false);
+                    await fetch("/api/auth/logout", { method: "POST" });
+                    window.location.href = "/";
+                  }}
+                  className="flex flex-col items-center gap-1 rounded-xl border border-slate-200 py-3 text-slate-600"
+                >
+                  <span className="text-base">→</span>
+                  <span className="text-[10px]">Вийти</span>
+                </button>
+              )}
             </div>
 
             {/* Lang */}
