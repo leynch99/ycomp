@@ -24,16 +24,33 @@ export function AccountClient() {
 
   const submit = async (event: React.FormEvent<HTMLFormElement>, path: string) => {
     event.preventDefault();
+    setMessage(null);
     const formData = new FormData(event.currentTarget);
     const payload = Object.fromEntries(formData.entries());
-    const res = await fetch(path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) setMessage("Успішно");
-    else if (res.status === 429) setMessage("Забагато спроб. Спробуйте через хвилину.");
-    else setMessage("Помилка");
+    try {
+      const res = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setMessage("Успішно");
+        window.location.reload();
+        return;
+      }
+      if (res.status === 429) {
+        setMessage("Забагато спроб. Спробуйте через хвилину.");
+        return;
+      }
+      const err = (data as { error?: string })?.error;
+      if (err === "exists") setMessage("Цей email вже зареєстровано. Спробуйте увійти.");
+      else if (err === "invalid") setMessage("Перевірте дані: пароль мінімум 6 символів.");
+      else if (err === "server_error") setMessage("Помилка сервера. Спробуйте пізніше.");
+      else setMessage("Помилка. Спробуйте пізніше.");
+    } catch {
+      setMessage("Помилка зʼєднання. Перевірте інтернет.");
+    }
   };
 
   return (
@@ -99,7 +116,8 @@ export function AccountClient() {
               name="password"
               required
               type="password"
-              placeholder="Пароль"
+              minLength={6}
+              placeholder="Пароль (мін. 6 символів)"
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
             />
             <button className="w-full rounded-full bg-lilac px-4 py-2 text-sm text-white">
