@@ -86,7 +86,7 @@ export default async function BlogPostPage({ params }: Props) {
       <header className="mt-6">
         <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">{post.title}</h1>
         <time
-          dateTime={post.createdAt}
+          dateTime={typeof post.createdAt === "string" ? post.createdAt : post.createdAt.toISOString()}
           className="mt-2 block text-sm text-slate-500"
         >
           {new Date(post.createdAt).toLocaleDateString("uk-UA", {
