@@ -10,6 +10,9 @@
 |------|-------|--------------|
 | `NEXT_PUBLIC_SITE_URL` | `https://ycomp.ua` | Production, Preview |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | `G-XXXXXXXXXX` | Production, Preview |
+| `BLOB_READ_WRITE_TOKEN` | *(авто)* | Production, Preview |
+
+**Blob для завантаження фото:** Vercel → **Storage** → **Create Database** → обрати **Blob** → створити. Токен `BLOB_READ_WRITE_TOKEN` зʼявиться автоматично.
 
 **Як отримати GA Measurement ID:**
 - [analytics.google.com](https://analytics.google.com) → Admin → Data Streams

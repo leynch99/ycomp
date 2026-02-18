@@ -63,6 +63,7 @@ export function AdminProductForm({
   const [form, setForm] = useState<ProductData>({ ...empty, ...initial });
   const [imageInput, setImageInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const set = <K extends keyof ProductData>(key: K, value: ProductData[K]) =>
@@ -87,6 +88,32 @@ export function AdminProductForm({
 
   const removeImage = (index: number) => {
     set("images", form.images.filter((_, i) => i !== index));
+  };
+
+  const uploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setMessage(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        credentials: "include",
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.url) {
+        set("images", [...form.images, data.url]);
+        e.target.value = "";
+      } else {
+        setMessage(`Помилка: ${data.error || res.status}`);
+      }
+    } catch {
+      setMessage("Помилка завантаження");
+    }
+    setUploading(false);
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -242,13 +269,31 @@ export function AdminProductForm({
 
       {/* Images */}
       <fieldset className="space-y-3 rounded-xl border border-slate-200/70 p-4">
-        <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Фото (URL)</legend>
-        <div className="flex gap-2">
+        <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Фото</legend>
+        <div className="flex flex-wrap gap-2">
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            onChange={uploadFile}
+            className="hidden"
+            id="product-photo-upload"
+          />
+          <label
+            htmlFor={uploading ? undefined : "product-photo-upload"}
+            className={`shrink-0 rounded-full border px-4 py-2 text-xs transition ${
+              uploading
+                ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500 pointer-events-none"
+                : "cursor-pointer border-lilac bg-white text-lilac hover:bg-[var(--lilac-50)]"
+            }`}
+          >
+            {uploading ? "Завантаження..." : "Завантажити з ПК"}
+          </label>
+          <span className="flex items-center gap-2 text-slate-400">або URL:</span>
           <input
             value={imageInput}
             onChange={(e) => setImageInput(e.target.value)}
             placeholder="https://... або /images/photo.jpg"
-            className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="flex-1 min-w-[200px] rounded-lg border border-slate-200 px-3 py-2 text-sm"
           />
           <button type="button" onClick={addImage} className="shrink-0 rounded-full bg-lilac px-4 py-2 text-xs text-white">
             Додати
