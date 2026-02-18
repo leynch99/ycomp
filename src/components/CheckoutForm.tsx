@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "@/components/providers/CartProvider";
 import { formatPrice } from "@/lib/utils";
+import { UKRAINIAN_CITIES } from "@/lib/ukrainian-cities";
 
 type Carrier = "np" | "up";
 type CityOption = { ref?: string; id?: string; name: string; region?: string };
@@ -16,69 +17,62 @@ export function CheckoutForm() {
 
   // Delivery
   const [carrier, setCarrier] = useState<Carrier>("np");
-  const [cityQuery, setCityQuery] = useState("");
-  const [cityOptions, setCityOptions] = useState<CityOption[]>([]);
-  const [selectedCity, setSelectedCity] = useState<CityOption | null>(null);
-  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [selectedCityName, setSelectedCityName] = useState("");
+  const [cityRef, setCityRef] = useState<string | null>(null);
   const [branches, setBranches] = useState<BranchOption[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<BranchOption | null>(null);
+  const [branchesLoading, setBranchesLoading] = useState(false);
   const [branchFallback, setBranchFallback] = useState<string | null>(null);
   const [manualBranch, setManualBranch] = useState("");
-  const cityDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cityInputRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
+  // Resolve city Ref via API when city name selected
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (cityInputRef.current && !cityInputRef.current.contains(e.target as Node)) {
-        setShowCityDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+    setCityRef(null);
+    setBranches([]);
+    setSelectedBranch(null);
+    setBranchFallback(null);
+    setManualBranch("");
+    if (!selectedCityName.trim()) return;
 
-  // City search
-  useEffect(() => {
-    if (cityDebounce.current) clearTimeout(cityDebounce.current);
-    if (cityQuery.trim().length < 2) {
-      setCityOptions([]);
-      return;
-    }
-    cityDebounce.current = setTimeout(async () => {
+    const fetchRef = async () => {
       try {
         const endpoint =
           carrier === "np"
-            ? `/api/delivery/np/cities?q=${encodeURIComponent(cityQuery)}`
-            : `/api/delivery/up/cities?q=${encodeURIComponent(cityQuery)}`;
+            ? `/api/delivery/np/cities?q=${encodeURIComponent(selectedCityName)}`
+            : `/api/delivery/up/cities?q=${encodeURIComponent(selectedCityName)}`;
         const res = await fetch(endpoint);
         if (res.ok) {
           const data = await res.json();
-          setCityOptions(data.cities ?? []);
-          setShowCityDropdown(true);
+          const cities: CityOption[] = data.cities ?? [];
+          const q = selectedCityName.toLowerCase().trim();
+          const exact = cities.find(
+            (c) =>
+              c.name.toLowerCase().includes(q) ||
+              q.includes(c.name.split(",")[0].toLowerCase()) ||
+              q.includes(c.name.split(" ")[0].toLowerCase())
+          );
+          const pick = exact || cities[0];
+          if (pick?.ref || pick?.id) setCityRef(String(pick.ref || pick.id));
         }
       } catch { /* ignore */ }
-    }, 300);
-    return () => { if (cityDebounce.current) clearTimeout(cityDebounce.current); };
-  }, [cityQuery, carrier]);
+    };
+    fetchRef();
+  }, [selectedCityName, carrier]);
 
-  // Load branches when city selected
+  // Load branches when city Ref resolved
   useEffect(() => {
-    setSelectedBranch(null);
+    if (!cityRef) return;
+    setBranchesLoading(true);
     setBranches([]);
+    setSelectedBranch(null);
     setBranchFallback(null);
-    setManualBranch("");
-    if (!selectedCity) return;
-
-    const ref = selectedCity.ref || selectedCity.id;
-    if (!ref) return;
 
     (async () => {
       try {
         const endpoint =
           carrier === "np"
-            ? `/api/delivery/np/branches?cityRef=${encodeURIComponent(ref)}`
-            : `/api/delivery/up/branches?cityId=${encodeURIComponent(ref)}`;
+            ? `/api/delivery/np/branches?cityRef=${encodeURIComponent(cityRef)}`
+            : `/api/delivery/up/branches?cityId=${encodeURIComponent(cityRef)}`;
         const res = await fetch(endpoint);
         if (res.ok) {
           const data = await res.json();
@@ -86,15 +80,14 @@ export function CheckoutForm() {
           if (data.fallbackMessage) setBranchFallback(data.fallbackMessage);
         }
       } catch { /* ignore */ }
+      setBranchesLoading(false);
     })();
-  }, [selectedCity, carrier]);
+  }, [cityRef, carrier]);
 
-  // Reset delivery on carrier change
   const switchCarrier = (c: Carrier) => {
     setCarrier(c);
-    setCityQuery("");
-    setCityOptions([]);
-    setSelectedCity(null);
+    setSelectedCityName("");
+    setCityRef(null);
     setBranches([]);
     setSelectedBranch(null);
     setBranchFallback(null);
@@ -103,17 +96,23 @@ export function CheckoutForm() {
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!selectedCityName.trim()) {
+      setError("Оберіть місто доставки");
+      return;
+    }
+    const branchDisplay = selectedBranch
+      ? `${selectedBranch.name}${selectedBranch.address ? ` — ${selectedBranch.address}` : ""}`
+      : manualBranch;
+    if (!branchDisplay?.trim()) {
+      setError("Оберіть відділення або вкажіть адресу");
+      return;
+    }
     setLoading(true);
     setSuccess(null);
     setError(null);
 
     const formData = new FormData(event.currentTarget);
     const payload = Object.fromEntries(formData.entries());
-
-    const branchDisplay = selectedBranch
-      ? `${selectedBranch.name}${selectedBranch.address ? ` — ${selectedBranch.address}` : ""}`
-      : manualBranch;
-
     const carrierLabel = carrier === "np" ? "Нова Пошта" : "Укрпошта";
 
     const res = await fetch("/api/orders", {
@@ -121,7 +120,7 @@ export function CheckoutForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...payload,
-        city: selectedCity?.name ?? cityQuery,
+        city: selectedCityName,
         npBranch: `${carrierLabel}: ${branchDisplay}`,
         items,
       }),
@@ -140,6 +139,9 @@ export function CheckoutForm() {
     }
     setLoading(false);
   };
+
+  const citySelectClass = "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm";
+  const branchSelectClass = "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm";
 
   return (
     <form onSubmit={onSubmit} className="grid gap-4 sm:gap-6 lg:grid-cols-[1.2fr_0.8fr]">
@@ -182,87 +184,76 @@ export function CheckoutForm() {
             </button>
           </div>
 
-          {/* City search */}
-          <div ref={cityInputRef} className="relative">
+          {/* City dropdown — готовий список міст */}
+          <div>
             <label className="mb-1 block text-xs text-slate-500">Місто</label>
-            <input
-              value={cityQuery}
-              onChange={(e) => {
-                setCityQuery(e.target.value);
-                setSelectedCity(null);
-                setSelectedBranch(null);
-              }}
-              onFocus={() => { if (cityOptions.length > 0) setShowCityDropdown(true); }}
-              placeholder="Почніть вводити назву міста..."
+            <select
+              value={selectedCityName}
+              onChange={(e) => setSelectedCityName(e.target.value)}
               required
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            />
-            {showCityDropdown && cityOptions.length > 0 && (
-              <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg">
-                {cityOptions.map((city, i) => (
-                  <button
-                    type="button"
-                    key={city.ref || city.id || i}
-                    onClick={() => {
-                      setCityQuery(city.name);
-                      setSelectedCity(city);
-                      setShowCityDropdown(false);
-                    }}
-                    className="block w-full px-3 py-2 text-left text-sm hover:bg-[var(--lilac-50)]"
-                  >
-                    {city.name}
-                    {city.region && <span className="ml-2 text-xs text-slate-400">{city.region}</span>}
-                  </button>
-                ))}
-              </div>
-            )}
+              className={citySelectClass}
+            >
+              <option value="">Оберіть місто</option>
+              {UKRAINIAN_CITIES.map((city) => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* Branch select */}
-          {selectedCity && (
-            <div>
-              <label className="mb-1 block text-xs text-slate-500">
-                Відділення {carrier === "np" ? "Нової Пошти" : "Укрпошти"}
-              </label>
-              {branches.length > 0 ? (
-                <select
+          {/* Branch dropdown — завантажується через API після вибору міста */}
+          <div>
+            <label className="mb-1 block text-xs text-slate-500">
+              Відділення {carrier === "np" ? "Нової Пошти" : "Укрпошти"}
+            </label>
+            {!selectedCityName ? (
+              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-xs text-slate-500">
+                Спочатку оберіть місто
+              </div>
+            ) : branchesLoading ? (
+              <div className="rounded-lg border border-slate-200 px-3 py-3 text-xs text-slate-500">
+                Завантаження відділень...
+              </div>
+            ) : branches.length > 0 ? (
+              <select
+                required
+                value={selectedBranch ? (selectedBranch.ref || selectedBranch.id || "") : ""}
+                onChange={(e) => {
+                  const br = branches.find((b) => (b.ref || b.id) === e.target.value);
+                  setSelectedBranch(br ?? null);
+                }}
+                className={branchSelectClass}
+              >
+                <option value="">Оберіть відділення</option>
+                {branches.map((br) => (
+                  <option key={br.ref || br.id} value={br.ref || br.id}>
+                    {br.name}{br.address ? ` — ${br.address}` : ""}
+                  </option>
+                ))}
+              </select>
+            ) : branchFallback || (!branchesLoading && branches.length === 0) ? (
+              <div>
+                {branchFallback && <div className="mb-2 text-xs text-slate-500">{branchFallback}</div>}
+                {!branchFallback && (
+                  <div className="mb-2 text-xs text-slate-500">Не знайдено відділень. Вкажіть адресу вручну:</div>
+                )}
+                <input
+                  value={manualBranch}
+                  onChange={(e) => setManualBranch(e.target.value)}
                   required
-                  value={selectedBranch ? (selectedBranch.ref || selectedBranch.id || "") : ""}
-                  onChange={(e) => {
-                    const br = branches.find((b) => (b.ref || b.id) === e.target.value);
-                    setSelectedBranch(br ?? null);
-                  }}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                >
-                  <option value="">Оберіть відділення</option>
-                  {branches.map((br) => (
-                    <option key={br.ref || br.id} value={br.ref || br.id}>
-                      {br.name}{br.address ? ` — ${br.address}` : ""}
-                    </option>
-                  ))}
-                </select>
-              ) : branchFallback ? (
-                <div>
-                  <div className="mb-2 text-xs text-slate-500">{branchFallback}</div>
-                  <input
-                    value={manualBranch}
-                    onChange={(e) => setManualBranch(e.target.value)}
-                    required
-                    placeholder="Індекс або адреса відділення"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                  />
-                </div>
-              ) : (
-                <div className="text-xs text-slate-400">Завантаження відділень...</div>
-              )}
-            </div>
-          )}
+                  placeholder="Адреса відділення (вулиця, номер)"
+                  className={citySelectClass}
+                />
+              </div>
+            ) : null}
+          </div>
         </fieldset>
 
         {/* Payment */}
         <fieldset className="space-y-3 rounded-xl border border-slate-200/70 bg-white p-4 sm:rounded-2xl sm:p-6">
           <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Оплата</legend>
-          <select name="paymentMethod" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+          <select name="paymentMethod" className={citySelectClass}>
             <option value="online">Онлайн</option>
             <option value="cod">Накладений платіж</option>
             <option value="bank">Безготівково</option>

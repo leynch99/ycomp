@@ -17,7 +17,7 @@ export async function GET(request: Request) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           apiKey,
-          modelName: "Address",
+          modelName: "AddressGeneral",
           calledMethod: "getWarehouses",
           methodProperties: { CityRef: cityRef, Limit: "100", Page: "1" },
         }),
