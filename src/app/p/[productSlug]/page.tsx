@@ -102,7 +102,13 @@ export default async function ProductPage({ params }: Props) {
       <div className="mt-4 grid gap-5 sm:mt-6 sm:gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-3 sm:space-y-4">
           <div className="relative aspect-square overflow-hidden rounded-2xl border border-lilac bg-gradient-to-br from-[var(--lilac-50)] via-white to-[var(--lilac-100)] shadow-sm sm:rounded-3xl">
-            <Image src={mainImage.url} alt={product.name} fill className="object-contain p-6 sm:p-10" />
+            <Image
+              src={mainImage.url}
+              alt={product.name}
+              fill
+              className="object-contain p-6 sm:p-10"
+              unoptimized={mainImage.url.startsWith("http")}
+            />
           </div>
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {thumbs.map((img, index) => (
@@ -110,7 +116,13 @@ export default async function ProductPage({ params }: Props) {
                 key={`${img.url}-${index}`}
                 className="relative aspect-square overflow-hidden rounded-xl border border-slate-200/70 bg-white hover:border-[var(--lilac-500)] sm:rounded-2xl"
               >
-                <Image src={img.url} alt={product.name} fill className="object-contain p-3 sm:p-4" />
+                <Image
+                  src={img.url}
+                  alt={product.name}
+                  fill
+                  className="object-contain p-3 sm:p-4"
+                  unoptimized={img.url.startsWith("http")}
+                />
               </div>
             ))}
           </div>
@@ -153,7 +165,6 @@ export default async function ProductPage({ params }: Props) {
             <div className="mt-4 grid gap-2 rounded-xl bg-[var(--lilac-50)] px-3 py-2 text-xs text-slate-600">
               <div>Гарантія та повернення 14 днів</div>
               <div>Доставка: Нова Пошта, 1–3 дні</div>
-              <div>Оплата: онлайн/наложка/безнал</div>
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">

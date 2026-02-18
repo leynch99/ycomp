@@ -46,6 +46,7 @@ export function CartModal() {
               alt={current.name}
               fill
               className="object-contain p-2"
+              unoptimized={!!(current.image?.startsWith("http"))}
             />
           </div>
           <div className="flex-1">

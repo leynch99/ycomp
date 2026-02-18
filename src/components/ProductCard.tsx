@@ -48,6 +48,7 @@ export function ProductCard({
           alt={product.name}
           fill
           className="object-contain p-4 transition duration-300 group-hover:scale-105"
+          unoptimized={!!(product.image?.startsWith("http"))}
         />
       </div>
       <Link

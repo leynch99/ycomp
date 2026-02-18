@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useCart } from "@/components/providers/CartProvider";
 import { formatPrice } from "@/lib/utils";
 import { ProductListItem } from "@/lib/types";
@@ -10,18 +10,24 @@ import { ProductListItem } from "@/lib/types";
 export function CartPageClient() {
   const { items, updateQty, removeItem, total, addItem } = useCart();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [promo, setPromo] = useState("");
+  const processedAddId = useRef<string | null>(null);
 
   useEffect(() => {
     const addId = searchParams.get("add");
-    if (!addId) return;
+    if (!addId || processedAddId.current === addId) return;
+    processedAddId.current = addId;
     fetch(`/api/products/${addId}`)
       .then((res) => res.json())
       .then((data: { product?: ProductListItem }) => {
         if (data.product) addItem(data.product, 1);
       })
-      .catch(() => null);
-  }, [searchParams, addItem]);
+      .catch(() => null)
+      .finally(() => {
+        router.replace("/cart", { scroll: false });
+      });
+  }, [searchParams, addItem, router]);
 
   return (
     <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1.3fr_0.7fr]">
