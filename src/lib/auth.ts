@@ -45,7 +45,7 @@ export async function getSessionUser() {
     const payload = await verifySession(token);
     return prisma.user.findUnique({
       where: { id: payload.userId },
-      select: { id: true, email: true, name: true, role: true },
+      select: { id: true, email: true, name: true, phone: true, birthDate: true, role: true },
     });
   } catch {
     return null;

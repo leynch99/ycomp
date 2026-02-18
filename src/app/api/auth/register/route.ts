@@ -10,17 +10,33 @@ export async function POST(request: Request) {
     if (!allowed) return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
 
     const body = await request.json();
+    const lastName = String(body?.lastName ?? "").trim().slice(0, 50);
+    const firstName = String(body?.firstName ?? "").trim().slice(0, 50);
+    const phone = String(body?.phone ?? "").trim().slice(0, 20);
     const email = String(body?.email ?? "").trim().toLowerCase().slice(0, 255);
     const password = body?.password;
-    const name = String(body?.name ?? "").trim().slice(0, 100);
+    const confirmPassword = body?.confirmPassword;
+
+    if (!lastName || !firstName) {
+      return NextResponse.json({ error: "name_required" }, { status: 400 });
+    }
+    if (!phone || !/^\+380\d{9}$/.test(phone)) {
+      return NextResponse.json({ error: "phone_invalid" }, { status: 400 });
+    }
     if (!email || !password || typeof password !== "string" || password.length < 6) {
       return NextResponse.json({ error: "invalid" }, { status: 400 });
     }
+    if (password !== confirmPassword) {
+      return NextResponse.json({ error: "passwords_mismatch" }, { status: 400 });
+    }
+
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return NextResponse.json({ error: "exists" }, { status: 400 });
+
     const passwordHash = await hashPassword(password);
+    const name = `${lastName} ${firstName}`;
     const user = await prisma.user.create({
-      data: { email, passwordHash, name: name || undefined },
+      data: { email, passwordHash, name, phone },
     });
     await createSessionCookie({ userId: user.id, role: user.role, email: user.email });
     return NextResponse.json({ id: user.id });
