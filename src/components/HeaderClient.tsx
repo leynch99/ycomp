@@ -13,12 +13,18 @@ type Category = {
   slug: string;
 };
 
-type SearchProduct = {
+type SearchItem = {
   id: string;
   name: string;
   slug: string;
+  brand: string;
   salePrice: number;
   image: string | null;
+};
+
+type SearchHints = {
+  categories: { id: string; name: string; slug: string }[];
+  brands: string[];
 };
 
 type User = {
@@ -44,21 +50,21 @@ export function HeaderClient({
   const [mobileMenu, setMobileMenu] = useState(false);
   const [mobileSearch, setMobileSearch] = useState(false);
   const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<Category[]>([]);
-  const [searchProducts, setSearchProducts] = useState<SearchProduct[]>([]);
+  const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
+  const [searchHints, setSearchHints] = useState<SearchHints | null>(null);
 
   useEffect(() => {
     const id = setTimeout(async () => {
       if (!query.trim()) {
-        setSuggestions([]);
-        setSearchProducts([]);
+        setSearchItems([]);
+        setSearchHints(null);
         return;
       }
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
       if (!res.ok) return;
-      const data = (await res.json()) as { suggestions?: Category[]; products?: SearchProduct[] };
-      setSuggestions(data.suggestions ?? []);
-      setSearchProducts(data.products ?? []);
+      const data = (await res.json()) as { items?: SearchItem[]; hints?: SearchHints | null };
+      setSearchItems(data.items ?? []);
+      setSearchHints(data.hints ?? null);
     }, 250);
     return () => clearTimeout(id);
   }, [query]);
@@ -136,35 +142,55 @@ export function HeaderClient({
           placeholder={`${t(lang, "search")}...`}
           className="w-full rounded-full border border-slate-200 bg-white px-9 py-2 text-xs text-slate-700 focus:border-[var(--lilac-500)] focus:outline-none"
         />
-        {(suggestions.length > 0 || searchProducts.length > 0) && (
+        {(searchItems.length > 0 || searchHints) && (
           <div className="absolute left-0 right-0 top-11 z-40 max-h-80 overflow-y-auto rounded-2xl border bg-white p-2 text-sm shadow-lg">
-            {searchProducts.length > 0 && (
+            {searchItems.length > 0 && (
               <>
                 <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Товари</div>
-                {searchProducts.map((p) => (
+                {searchItems.map((p) => (
                   <Link
                     key={p.id}
                     href={`/p/${p.slug}`}
                     className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 hover:bg-slate-50"
                   >
-                    <span className="truncate">{p.name}</span>
+                    <div className="min-w-0">
+                      <span className="truncate">{p.name}</span>
+                      {p.brand && <span className="block text-[11px] text-slate-500">{p.brand}</span>}
+                    </div>
                     <span className="shrink-0 font-medium text-slate-600">{p.salePrice.toLocaleString("uk-UA")} ₴</span>
                   </Link>
                 ))}
               </>
             )}
-            {suggestions.length > 0 && (
+            {searchItems.length === 0 && searchHints && (
               <>
-                <div className="mb-2 mt-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Категорії</div>
-                {suggestions.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/c/${item.slug}`}
-                    className="block rounded-lg px-3 py-2 hover:bg-slate-50"
-                  >
-                    {item.name}
-                  </Link>
-                ))}
+                <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Спробуйте категорії або бренди
+                </div>
+                {searchHints.categories.length > 0 && (
+                  <div className="mb-2">
+                    <span className="text-[11px] text-slate-400">Категорії:</span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {searchHints.categories.map((c) => (
+                        <Link key={c.id} href={`/c/${c.slug}`} className="rounded-full border border-slate-200 px-2 py-1 text-xs hover:bg-slate-50">
+                          {c.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {searchHints.brands.length > 0 && (
+                  <div>
+                    <span className="text-[11px] text-slate-400">Бренди:</span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {searchHints.brands.map((b) => (
+                        <Link key={b} href={`/catalog?brand=${encodeURIComponent(b)}`} className="rounded-full border border-slate-200 px-2 py-1 text-xs hover:bg-slate-50">
+                          {b}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             )}
             <Link
@@ -282,37 +308,56 @@ export function HeaderClient({
               autoFocus
               className="w-full rounded-full border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-700 focus:border-[var(--lilac-500)] focus:outline-none"
             />
-            {(suggestions.length > 0 || searchProducts.length > 0) && (
+            {(searchItems.length > 0 || searchHints) && (
               <div className="absolute left-0 right-0 top-12 z-40 max-h-80 overflow-y-auto rounded-2xl border bg-white p-2 text-sm shadow-lg">
-                {searchProducts.length > 0 && (
+                {searchItems.length > 0 && (
                   <>
                     <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Товари</div>
-                    {searchProducts.map((p) => (
+                    {searchItems.map((p) => (
                       <Link
                         key={p.id}
                         href={`/p/${p.slug}`}
                         onClick={() => setMobileSearch(false)}
                         className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 hover:bg-slate-50"
                       >
-                        <span className="truncate">{p.name}</span>
+                        <div className="min-w-0">
+                          <span className="truncate">{p.name}</span>
+                          {p.brand && <span className="block text-[11px] text-slate-500">{p.brand}</span>}
+                        </div>
                         <span className="shrink-0 font-medium text-slate-600">{p.salePrice.toLocaleString("uk-UA")} ₴</span>
                       </Link>
                     ))}
                   </>
                 )}
-                {suggestions.length > 0 && (
+                {searchItems.length === 0 && searchHints && (
                   <>
-                    <div className="mb-2 mt-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Категорії</div>
-                    {suggestions.map((item) => (
-                      <Link
-                        key={item.id}
-                        href={`/c/${item.slug}`}
-                        onClick={() => setMobileSearch(false)}
-                        className="block rounded-lg px-3 py-2 hover:bg-slate-50"
-                      >
-                        {item.name}
-                      </Link>
-                    ))}
+                    <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                      Спробуйте категорії або бренди
+                    </div>
+                    {searchHints.categories.length > 0 && (
+                      <div className="mb-2">
+                        <span className="text-[11px] text-slate-400">Категорії:</span>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {searchHints.categories.map((c) => (
+                            <Link key={c.id} href={`/c/${c.slug}`} onClick={() => setMobileSearch(false)} className="rounded-full border border-slate-200 px-2 py-1 text-xs hover:bg-slate-50">
+                              {c.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {searchHints.brands.length > 0 && (
+                      <div>
+                        <span className="text-[11px] text-slate-400">Бренди:</span>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {searchHints.brands.map((b) => (
+                            <Link key={b} href={`/catalog?brand=${encodeURIComponent(b)}`} onClick={() => setMobileSearch(false)} className="rounded-full border border-slate-200 px-2 py-1 text-xs hover:bg-slate-50">
+                              {b}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
                 <Link

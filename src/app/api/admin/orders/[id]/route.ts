@@ -3,6 +3,19 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 import type { OrderStatus, PayoutStatus } from "@prisma/client";
 
+export async function GET(_request: NextRequest, context: { params: unknown }) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+  const resolvedParams = await Promise.resolve(context.params as { id: string });
+  const order = await prisma.order.findUnique({
+    where: { id: resolvedParams.id },
+    include: { items: true },
+  });
+  if (!order) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  return NextResponse.json({ order });
+}
+
 export async function PATCH(request: NextRequest, context: { params: any }) {
   const body = await request.json();
   const status = body.status as OrderStatus;

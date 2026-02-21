@@ -37,6 +37,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Lighthouse
+lighthouse-report.html
+.lighthouseci
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

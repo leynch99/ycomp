@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { Providers } from "@/components/providers/Providers";
 import { QuickContactWidget } from "@/components/QuickContactWidget";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 
 export const runtime = "nodejs";
 
@@ -56,6 +57,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
           <GoogleAnalytics />
+          <WebVitalsReporter />
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{

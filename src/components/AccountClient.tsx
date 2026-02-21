@@ -48,6 +48,12 @@ export function AccountClient({ user }: { user?: User }) {
   // Registration
   const [regError, setRegError] = useState<string | null>(null);
 
+  // Challenge (after N failed attempts)
+  const [challengeRequired, setChallengeRequired] = useState(false);
+  const [challengeId, setChallengeId] = useState<string | null>(null);
+  const [challengeQuestion, setChallengeQuestion] = useState<string | null>(null);
+  const [challengeAnswer, setChallengeAnswer] = useState("");
+
   useEffect(() => {
     if (!user) return;
     fetch("/api/account/orders")
@@ -56,12 +62,21 @@ export function AccountClient({ user }: { user?: User }) {
       .catch(() => null);
   }, [user]);
 
+  const fetchChallenge = async () => {
+    const res = await fetch("/api/auth/challenge");
+    if (!res.ok) return;
+    const { id, question } = await res.json();
+    setChallengeId(id);
+    setChallengeQuestion(question);
+    setChallengeAnswer("");
+  };
+
   const submitAuth = async (event: React.FormEvent<HTMLFormElement>, path: string) => {
     event.preventDefault();
     setMessage(null);
     setRegError(null);
     const formData = new FormData(event.currentTarget);
-    const payload = Object.fromEntries(formData.entries());
+    const payload = Object.fromEntries(formData.entries()) as Record<string, string>;
 
     if (path === "/api/auth/register") {
       if (payload.password !== payload.confirmPassword) {
@@ -70,13 +85,18 @@ export function AccountClient({ user }: { user?: User }) {
       }
     }
 
+    if (challengeRequired && challengeId) {
+      payload.challengeId = challengeId;
+      payload.challengeAnswer = challengeAnswer;
+    }
+
     try {
       const res = await fetch(path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as { error?: string; challengeRequired?: boolean };
       if (res.ok) {
         window.location.href = "/";
         return;
@@ -85,7 +105,19 @@ export function AccountClient({ user }: { user?: User }) {
         setMessage("Забагато спроб. Спробуйте через хвилину.");
         return;
       }
-      const err = (data as { error?: string })?.error;
+      if (data.challengeRequired) {
+        setChallengeRequired(true);
+        await fetchChallenge();
+        setMessage("Підтвердіть, що ви не робот. Відповідьте на питання:");
+        return;
+      }
+      const err = data.error;
+      if (err === "challenge_invalid") {
+        setMessage("Невірна відповідь. Спробуйте ще раз.");
+        setChallengeAnswer("");
+        fetchChallenge();
+        return;
+      }
       if (err === "exists") setRegError("Цей email вже зареєстровано.");
       else if (err === "passwords_mismatch") setRegError("Паролі не співпадають.");
       else if (err === "phone_invalid") setRegError("Невірний формат телефону (+380XXXXXXXXX).");
@@ -159,13 +191,13 @@ export function AccountClient({ user }: { user?: User }) {
         <div className="rounded-2xl border border-slate-200/70 bg-white p-6">
           <div className="flex gap-2 text-sm">
             <button
-              onClick={() => { setAuthTab("login"); setMessage(null); setRegError(null); }}
+              onClick={() => { setAuthTab("login"); setMessage(null); setRegError(null); setChallengeRequired(false); setChallengeQuestion(null); }}
               className={`rounded-full px-4 py-2 ${authTab === "login" ? "bg-lilac text-white" : "border border-slate-200 text-slate-600"}`}
             >
               Вхід
             </button>
             <button
-              onClick={() => { setAuthTab("register"); setMessage(null); setRegError(null); }}
+              onClick={() => { setAuthTab("register"); setMessage(null); setRegError(null); setChallengeRequired(false); setChallengeQuestion(null); }}
               className={`rounded-full px-4 py-2 ${authTab === "register" ? "bg-lilac text-white" : "border border-slate-200 text-slate-600"}`}
             >
               Реєстрація
@@ -176,6 +208,18 @@ export function AccountClient({ user }: { user?: User }) {
             <form onSubmit={(e) => submitAuth(e, "/api/auth/login")} className="mt-4 space-y-3">
               <input name="email" required type="email" placeholder="Email" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
               <input name="password" required type="password" placeholder="Пароль" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+              {challengeQuestion && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                  <label className="mb-2 block text-xs font-medium text-amber-800">{challengeQuestion}</label>
+                  <input
+                    value={challengeAnswer}
+                    onChange={(e) => setChallengeAnswer(e.target.value)}
+                    type="number"
+                    placeholder="Відповідь"
+                    className="w-full rounded-lg border border-amber-200 px-3 py-2 text-sm"
+                  />
+                </div>
+              )}
               <button className="w-full rounded-full bg-lilac px-4 py-2 text-sm text-white">Увійти</button>
             </form>
           ) : (
@@ -188,6 +232,18 @@ export function AccountClient({ user }: { user?: User }) {
               <input name="email" required type="email" placeholder="Email" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
               <input name="password" required type="password" minLength={6} placeholder="Пароль (мін. 6 символів)" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
               <input name="confirmPassword" required type="password" minLength={6} placeholder="Підтвердіть пароль" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+              {challengeQuestion && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                  <label className="mb-2 block text-xs font-medium text-amber-800">{challengeQuestion}</label>
+                  <input
+                    value={challengeAnswer}
+                    onChange={(e) => setChallengeAnswer(e.target.value)}
+                    type="number"
+                    placeholder="Відповідь"
+                    className="w-full rounded-lg border border-amber-200 px-3 py-2 text-sm"
+                  />
+                </div>
+              )}
               {regError && <div className="text-xs text-red-600">{regError}</div>}
               <button className="w-full rounded-full bg-lilac px-4 py-2 text-sm text-white">Створити акаунт</button>
             </form>

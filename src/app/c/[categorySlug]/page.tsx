@@ -8,7 +8,7 @@ import { CatalogFilters } from "@/components/CatalogFilters";
 import { CatalogSort } from "@/components/CatalogSort";
 import { Pagination } from "@/components/Pagination";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { absoluteUrl } from "@/lib/seo";
+import { absoluteUrl, buildCatalogCanonical } from "@/lib/seo";
 import { notFound } from "next/navigation";
 
 type Props = {
@@ -16,14 +16,18 @@ type Props = {
   searchParams: Record<string, string | string[] | undefined>;
 };
 
-export async function generateMetadata({ params }: { params: Promise<{ categorySlug: string }> }): Promise<Metadata> {
+type MetaProps = { params: Promise<{ categorySlug: string }>; searchParams: Record<string, string | string[] | undefined> };
+
+export async function generateMetadata({ params, searchParams }: MetaProps): Promise<Metadata> {
   const { categorySlug } = await params;
   const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
   if (!category) return {};
   const desc = category.description?.slice(0, 160) ?? `${category.name} — компʼютерні комплектуючі в YComp`;
+  const canonical = buildCatalogCanonical(`/c/${category.slug}`, searchParams);
   return {
     title: category.name,
     description: desc,
+    alternates: { canonical },
     openGraph: {
       title: `${category.name} | YComp`,
       description: desc,

@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { rateLimitComposite, normalizePhone } from "@/lib/rate-limit";
+import { withApiLog } from "@/lib/api-with-logging";
 
-export async function POST(request: Request) {
+async function ordersHandler(request: Request) {
   const body = await request.json();
   const phone = String(body?.phone ?? "").trim();
   const email = String(body?.email ?? "").trim().toLowerCase();
@@ -22,12 +23,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Empty order" }, { status: 400 });
   }
 
+  const productIds = [...new Set(items.map((i) => i.id))];
   const products = await prisma.product.findMany({
-    where: { id: { in: items.map((i) => i.id) } },
+    where: { id: { in: productIds } },
   });
+  const productMap = new Map(products.map((p) => [p.id, p]));
+
+  for (const item of items) {
+    if (!productMap.has(item.id)) {
+      return NextResponse.json({ error: "Product not found" }, { status: 400 });
+    }
+  }
 
   const number = `YC-${Date.now().toString().slice(-6)}`;
-  const total = items.reduce((sum, item) => sum + item.salePrice * item.qty, 0);
+  let total = 0;
+  const orderItems = items.map((item) => {
+    const product = productMap.get(item.id)!;
+    const qty = Math.max(1, Math.min(99, Math.floor(Number(item.qty) || 1)));
+    const price = product.salePrice;
+    total += price * qty;
+    const cost = product.costPrice ?? Math.round(price * 0.8);
+    return {
+      productId: product.id,
+      name: product.name,
+      sku: product.sku,
+      qty,
+      price,
+      costPrice: cost,
+      margin: price - cost,
+    };
+  });
 
   const sessionUser = await getSessionUser();
   const order = await prisma.order.create({
@@ -42,23 +67,11 @@ export async function POST(request: Request) {
       comment: body.comment ?? null,
       total,
       userId: sessionUser?.id,
-      items: {
-        create: items.map((item) => {
-          const product = products.find((p) => p.id === item.id);
-          const cost = product?.costPrice ?? Math.round(item.salePrice * 0.8);
-          return {
-            productId: item.id,
-            name: item.name,
-            sku: item.sku,
-            qty: item.qty,
-            price: item.salePrice,
-            costPrice: cost,
-            margin: item.salePrice - cost,
-          };
-        }),
-      },
+      items: { create: orderItems },
     },
   });
 
   return NextResponse.json({ id: order.id, number: order.number });
 }
+
+export const POST = withApiLog(ordersHandler);

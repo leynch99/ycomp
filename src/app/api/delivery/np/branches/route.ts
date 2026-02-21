@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logExternalService } from "@/lib/logger";
+import { withApiLog } from "@/lib/api-with-logging";
 
 const NP_API = "https://api.novaposhta.ua/v2.0/json/";
 
-export async function GET(request: Request) {
+async function npBranchesHandler(request: Request) {
   const { searchParams } = new URL(request.url);
   const cityRef = searchParams.get("cityRef")?.trim();
   if (!cityRef) return NextResponse.json({ branches: [] });
@@ -11,6 +13,7 @@ export async function GET(request: Request) {
   const apiKey = process.env.NP_API_KEY;
 
   if (apiKey) {
+    const start = Date.now();
     try {
       const res = await fetch(NP_API, {
         method: "POST",
@@ -23,7 +26,9 @@ export async function GET(request: Request) {
         }),
       });
       const data = await res.json();
+      const latencyMs = Date.now() - start;
       if (data.success && data.data) {
+        logExternalService("np_branches", { success: true, latencyMs });
         const branches = data.data.map((w: Record<string, string>) => ({
           ref: w.Ref,
           name: w.Description,
@@ -32,7 +37,11 @@ export async function GET(request: Request) {
         return NextResponse.json({ branches });
       }
     } catch (e) {
-      console.error("[NP branches]", e);
+      logExternalService("np_branches", {
+        success: false,
+        latencyMs: Date.now() - start,
+        error: e instanceof Error ? e.message : String(e),
+      });
     }
   }
 
@@ -46,3 +55,5 @@ export async function GET(request: Request) {
     branches: branches.map((b) => ({ ref: b.id, name: b.name, address: b.address })),
   });
 }
+
+export const GET = withApiLog(npBranchesHandler);

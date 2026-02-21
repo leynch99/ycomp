@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
+import { withApiLog } from "@/lib/api-with-logging";
 
-export async function GET() {
+async function getBanners() {
   if (!(await requireAdmin())) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
@@ -11,6 +12,12 @@ export async function GET() {
   });
   return NextResponse.json({ banners });
 }
+
+async function getBannersHandler(_request: Request) {
+  return getBanners();
+}
+
+export const GET = withApiLog(getBannersHandler);
 
 export async function POST(request: Request) {
   if (!(await requireAdmin())) {

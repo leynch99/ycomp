@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useCart } from "@/components/providers/CartProvider";
 import { formatPrice } from "@/lib/utils";
 import { UKRAINIAN_CITIES } from "@/lib/ukrainian-cities";
@@ -9,11 +9,37 @@ type Carrier = "np" | "up";
 type CityOption = { ref?: string; id?: string; name: string; region?: string };
 type BranchOption = { ref?: string; id?: string; name: string; address?: string };
 
+function formatPhone(value: string): string {
+  const d = value.replace(/\D/g, "");
+  if (d.startsWith("380")) {
+    const rest = d.slice(3, 12);
+    return `+380 ${rest.slice(0, 2)} ${rest.slice(2, 5)} ${rest.slice(5, 7)} ${rest.slice(7)}`.trim();
+  }
+  return value;
+}
+
+function normalizePhoneForSubmit(value: string): string {
+  const d = value.replace(/\D/g, "");
+  if (d.length >= 9) return `+380${d.slice(-9)}`;
+  return `+380${d}`;
+}
+
 export function CheckoutForm() {
   const { items, total, clear } = useCart();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Steps: 1=contacts, 2=delivery, 3=payment
+  const [step, setStep] = useState(1);
+  const contactsRef = useRef<HTMLFieldSetElement>(null);
+  const deliveryRef = useRef<HTMLFieldSetElement>(null);
+  const paymentRef = useRef<HTMLFieldSetElement>(null);
+
+  // Contact fields (controlled for masks)
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
 
   // Delivery
   const [carrier, setCarrier] = useState<Carrier>("np");
@@ -25,13 +51,46 @@ export function CheckoutForm() {
   const [branchFallback, setBranchFallback] = useState<string | null>(null);
   const [manualBranch, setManualBranch] = useState("");
 
+  // Payment
+  const [paymentMethod, setPaymentMethod] = useState("online");
+  const [comment, setComment] = useState("");
+
+  // Auto-fill from last order
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/account/checkout-defaults", { credentials: "include" });
+        if (!res.ok) return;
+        const { defaults } = await res.json();
+        if (!defaults) return;
+        if (defaults.name) setName(defaults.name);
+        if (defaults.phone) setPhone(formatPhone(defaults.phone));
+        else if (defaults.phone === "") setPhone("");
+        if (defaults.email) setEmail(defaults.email);
+        if (defaults.city) setSelectedCityName(defaults.city);
+        if (defaults.paymentMethod) setPaymentMethod(defaults.paymentMethod);
+
+        if (defaults.npBranch) {
+          const s = defaults.npBranch;
+          if (s.startsWith("Укрпошта:")) {
+            setCarrier("up");
+            setManualBranch(s.replace(/^Укрпошта:\s*/, "").trim());
+          } else if (s.startsWith("Нова Пошта:")) {
+            setCarrier("np");
+            setManualBranch(s.replace(/^Нова Пошта:\s*/, "").trim());
+          }
+        }
+      } catch { /* ignore */ }
+    })();
+  }, []);
+
   // Resolve city Ref via API when city name selected
   useEffect(() => {
     setCityRef(null);
     setBranches([]);
     setSelectedBranch(null);
     setBranchFallback(null);
-    setManualBranch("");
+    setManualBranch((prev) => (selectedCityName.trim() ? prev : ""));
     if (!selectedCityName.trim()) return;
 
     const fetchRef = async () => {
@@ -76,8 +135,24 @@ export function CheckoutForm() {
         const res = await fetch(endpoint);
         if (res.ok) {
           const data = await res.json();
-          setBranches(data.branches ?? []);
+          const brs: BranchOption[] = data.branches ?? [];
+          setBranches(brs);
           if (data.fallbackMessage) setBranchFallback(data.fallbackMessage);
+
+          // Auto-select branch if manualBranch matches any branch
+          if (manualBranch.trim() && brs.length > 0) {
+            const m = manualBranch.toLowerCase();
+            const match = brs.find(
+              (b) =>
+                m.includes(b.name.toLowerCase()) ||
+                (b.name.toLowerCase().includes(m.split("—")[0].trim())) ||
+                (b.address && (m.includes(b.address.toLowerCase()) || b.address.toLowerCase().includes(m)))
+            );
+            if (match) {
+              setSelectedBranch(match);
+              setManualBranch("");
+            }
+          }
         }
       } catch { /* ignore */ }
       setBranchesLoading(false);
@@ -94,43 +169,90 @@ export function CheckoutForm() {
     setManualBranch("");
   };
 
+  const validateStep = (s: number): boolean => {
+    if (s === 1) {
+      const n = name.trim();
+      const p = phone.replace(/\D/g, "");
+      const e = email.trim();
+      if (!n) {
+        setError("Введіть імʼя");
+        contactsRef.current?.scrollIntoView({ behavior: "smooth" });
+        return false;
+      }
+      if (p.length < 9) {
+        setError("Введіть коректний телефон (+380XXXXXXXXX)");
+        contactsRef.current?.scrollIntoView({ behavior: "smooth" });
+        return false;
+      }
+      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!e || !emailRe.test(e)) {
+        setError("Введіть коректний email");
+        contactsRef.current?.scrollIntoView({ behavior: "smooth" });
+        return false;
+      }
+    }
+    if (s === 2) {
+      if (!selectedCityName.trim()) {
+        setError("Оберіть місто доставки");
+        deliveryRef.current?.scrollIntoView({ behavior: "smooth" });
+        return false;
+      }
+      const branchDisplay = selectedBranch
+        ? `${selectedBranch.name}${selectedBranch.address ? ` — ${selectedBranch.address}` : ""}`
+        : manualBranch;
+      if (!branchDisplay?.trim()) {
+        setError("Оберіть відділення або вкажіть адресу");
+        deliveryRef.current?.scrollIntoView({ behavior: "smooth" });
+        return false;
+      }
+    }
+    setError(null);
+    return true;
+  };
+
+  const goNext = () => {
+    if (validateStep(step)) setStep((s) => Math.min(3, s + 1));
+  };
+
+  const goBack = () => setStep((s) => Math.max(1, s - 1));
+
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!selectedCityName.trim()) {
-      setError("Оберіть місто доставки");
-      return;
-    }
+    if (!validateStep(1) || !validateStep(2)) return;
+
     const branchDisplay = selectedBranch
       ? `${selectedBranch.name}${selectedBranch.address ? ` — ${selectedBranch.address}` : ""}`
       : manualBranch;
-    if (!branchDisplay?.trim()) {
-      setError("Оберіть відділення або вкажіть адресу");
-      return;
-    }
     setLoading(true);
     setSuccess(null);
     setError(null);
 
-    const formData = new FormData(event.currentTarget);
-    const payload = Object.fromEntries(formData.entries());
     const carrierLabel = carrier === "np" ? "Нова Пошта" : "Укрпошта";
+    const payload = {
+      name: name.trim(),
+      phone: normalizePhoneForSubmit(phone),
+      email: email.trim(),
+      city: selectedCityName,
+      npBranch: `${carrierLabel}: ${branchDisplay}`,
+      paymentMethod,
+      comment: comment.trim() || undefined,
+      items,
+    };
 
     const res = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...payload,
-        city: selectedCityName,
-        npBranch: `${carrierLabel}: ${branchDisplay}`,
-        items,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (res.ok) {
       const data = await res.json();
       setSuccess(data.number);
       clear();
-      event.currentTarget.reset();
+      setStep(1);
+      setName("");
+      setPhone("");
+      setEmail("");
       switchCarrier("np");
     } else if (res.status === 429) {
       setError("Забагато спроб. Спробуйте через хвилину.");
@@ -140,27 +262,107 @@ export function CheckoutForm() {
     setLoading(false);
   };
 
-  const citySelectClass = "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm";
-  const branchSelectClass = "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm";
+  const inputClass = "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm";
+  const labelClass = "mb-1 block text-xs text-slate-500";
+  const requiredMark = <span className="text-red-500">*</span>;
 
   return (
     <form onSubmit={onSubmit} className="grid gap-4 sm:gap-6 lg:grid-cols-[1.2fr_0.8fr]">
       <div className="space-y-4 sm:space-y-5">
-        {/* Contact info */}
-        <fieldset className="space-y-3 rounded-xl border border-slate-200/70 bg-white p-4 sm:rounded-2xl sm:p-6">
-          <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Контактні дані</legend>
+        {/* Progress */}
+        <div className="flex gap-2">
+          {[1, 2, 3].map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setStep(s)}
+              className={`flex-1 rounded-lg py-2 text-xs font-medium transition ${
+                step === s
+                  ? "bg-lilac text-white"
+                  : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+              }`}
+            >
+              {s === 1 ? "Контакти" : s === 2 ? "Доставка" : "Оплата"}
+            </button>
+          ))}
+        </div>
+
+        {/* Step 1: Contact info */}
+        <fieldset
+          ref={contactsRef}
+          className={`space-y-3 rounded-xl border border-slate-200/70 bg-white p-4 sm:rounded-2xl sm:p-6 ${
+            step < 1 ? "opacity-60" : ""
+          }`}
+        >
+          <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Контактні дані {requiredMark}
+          </legend>
           <div className="grid gap-3 sm:grid-cols-2">
-            <input name="name" required placeholder="Імʼя" className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />
-            <input name="phone" required placeholder="+380XXXXXXXXX" pattern="\+380\d{9}" className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />
-            <input name="email" required type="email" placeholder="Email" className="rounded-lg border border-slate-200 px-3 py-2 text-sm sm:col-span-2" />
+            <div>
+              <label className={labelClass}>Імʼя {requiredMark}</label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="Ваше імʼя"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Телефон {requiredMark}</label>
+              <input
+                value={phone}
+                onChange={(e) => {
+                  let v = e.target.value;
+                  const d = v.replace(/\D/g, "");
+                  if (d.startsWith("8") || d.startsWith("0")) {
+                    v = "+380" + d.replace(/^[80]/, "").slice(0, 9);
+                  } else if (!d.startsWith("380")) {
+                    v = "+380" + d.slice(0, 9);
+                  } else {
+                    v = "+" + d.slice(0, 12);
+                  }
+                  setPhone(formatPhone(v));
+                }}
+                placeholder="+380 XX XXX XX XX"
+                className={inputClass}
+                maxLength={18}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className={labelClass}>Email {requiredMark}</label>
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                type="email"
+                placeholder="example@gmail.com"
+                className={inputClass}
+              />
+            </div>
           </div>
+          {step === 1 && (
+            <button
+              type="button"
+              onClick={goNext}
+              className="mt-2 rounded-full border border-lilac px-4 py-2 text-sm text-lilac hover:bg-[var(--lilac-50)]"
+            >
+              Далі: Доставка →
+            </button>
+          )}
         </fieldset>
 
-        {/* Delivery */}
-        <fieldset className="space-y-4 rounded-xl border border-slate-200/70 bg-white p-4 sm:rounded-2xl sm:p-6">
-          <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Доставка</legend>
+        {/* Step 2: Delivery */}
+        <fieldset
+          ref={deliveryRef}
+          className={`space-y-4 rounded-xl border border-slate-200/70 bg-white p-4 sm:rounded-2xl sm:p-6 ${
+            step < 2 ? "opacity-60" : ""
+          }`}
+        >
+          <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Доставка {requiredMark}
+          </legend>
 
-          {/* Carrier selection */}
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
@@ -184,14 +386,13 @@ export function CheckoutForm() {
             </button>
           </div>
 
-          {/* City dropdown — готовий список міст */}
           <div>
-            <label className="mb-1 block text-xs text-slate-500">Місто</label>
+            <label className={labelClass}>Місто {requiredMark}</label>
             <select
               value={selectedCityName}
               onChange={(e) => setSelectedCityName(e.target.value)}
               required
-              className={citySelectClass}
+              className={inputClass}
             >
               <option value="">Оберіть місто</option>
               {UKRAINIAN_CITIES.map((city) => (
@@ -202,10 +403,9 @@ export function CheckoutForm() {
             </select>
           </div>
 
-          {/* Branch dropdown — завантажується через API після вибору міста */}
           <div>
-            <label className="mb-1 block text-xs text-slate-500">
-              Відділення {carrier === "np" ? "Нової Пошти" : "Укрпошти"}
+            <label className={labelClass}>
+              Відділення {carrier === "np" ? "Нової Пошти" : "Укрпошти"} {requiredMark}
             </label>
             {!selectedCityName ? (
               <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-xs text-slate-500">
@@ -217,13 +417,13 @@ export function CheckoutForm() {
               </div>
             ) : branches.length > 0 ? (
               <select
-                required
+                required={!manualBranch.trim()}
                 value={selectedBranch ? (selectedBranch.ref || selectedBranch.id || "") : ""}
                 onChange={(e) => {
                   const br = branches.find((b) => (b.ref || b.id) === e.target.value);
                   setSelectedBranch(br ?? null);
                 }}
-                className={branchSelectClass}
+                className={inputClass}
               >
                 <option value="">Оберіть відділення</option>
                 {branches.map((br) => (
@@ -243,27 +443,72 @@ export function CheckoutForm() {
                   onChange={(e) => setManualBranch(e.target.value)}
                   required
                   placeholder="Адреса відділення (вулиця, номер)"
-                  className={citySelectClass}
+                  className={inputClass}
                 />
               </div>
             ) : null}
           </div>
+          {step === 2 && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={goBack}
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+              >
+                ← Назад
+              </button>
+              <button
+                type="button"
+                onClick={goNext}
+                className="rounded-full border border-lilac px-4 py-2 text-sm text-lilac hover:bg-[var(--lilac-50)]"
+              >
+                Далі: Оплата →
+              </button>
+            </div>
+          )}
         </fieldset>
 
-        {/* Payment */}
-        <fieldset className="space-y-3 rounded-xl border border-slate-200/70 bg-white p-4 sm:rounded-2xl sm:p-6">
-          <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Оплата</legend>
-          <select name="paymentMethod" className={citySelectClass}>
-            <option value="online">Онлайн</option>
-            <option value="cod">Накладений платіж</option>
-            <option value="bank">Безготівково</option>
-          </select>
-          <textarea
-            name="comment"
-            placeholder="Коментар до замовлення"
-            rows={2}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-          />
+        {/* Step 3: Payment */}
+        <fieldset
+          ref={paymentRef}
+          className={`space-y-3 rounded-xl border border-slate-200/70 bg-white p-4 sm:rounded-2xl sm:p-6 ${
+            step < 3 ? "opacity-60" : ""
+          }`}
+        >
+          <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Оплата
+          </legend>
+          <div>
+            <label className={labelClass}>Спосіб оплати</label>
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className={inputClass}
+            >
+              <option value="online">Онлайн</option>
+              <option value="cod">Накладений платіж</option>
+              <option value="bank">Безготівково</option>
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>Коментар (необовʼязково)</label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Коментар до замовлення"
+              rows={2}
+              className={inputClass}
+            />
+          </div>
+          {step === 3 && (
+            <button
+              type="button"
+              onClick={goBack}
+              className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+            >
+              ← Назад
+            </button>
+          )}
         </fieldset>
       </div>
 
@@ -286,6 +531,7 @@ export function CheckoutForm() {
           Підтвердження менеджером протягом 15 хвилин
         </div>
         <button
+          type="submit"
           disabled={loading || items.length === 0}
           className="w-full rounded-full bg-lilac px-4 py-2.5 text-sm text-white disabled:opacity-50"
         >

@@ -77,6 +77,8 @@ export function ProductPageClient({ product }: { product: ProductForPage }) {
               src={images[activeImage]?.url ?? "/images/placeholder.svg"}
               alt={product.name}
               fill
+              priority
+              sizes="(max-width: 768px) 100vw, 50vw"
               className="object-contain p-6 sm:p-10"
               unoptimized={isExternal(images[activeImage]?.url ?? "")}
             />
@@ -95,6 +97,8 @@ export function ProductPageClient({ product }: { product: ProductForPage }) {
                     src={img.url}
                     alt={product.name}
                     fill
+                    loading="lazy"
+                    sizes="80px"
                     className="object-contain p-2 sm:p-3"
                     unoptimized={isExternal(img.url)}
                   />

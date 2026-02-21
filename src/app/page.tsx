@@ -173,6 +173,8 @@ export default async function Home() {
                       src={tile.imageUrl}
                       alt={tile.title}
                       fill
+                      loading="lazy"
+                      sizes="(max-width: 1024px) 50vw, 40vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                       unoptimized
                     />

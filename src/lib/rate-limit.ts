@@ -1,14 +1,19 @@
 /**
  * In-memory rate limiter with IP + email/phone composite limits.
- * Security telemetry for audit trail.
+ * Challenge-after-N-failures, security telemetry.
  */
 
 const store = new Map<string, { count: number; resetAt: number }>();
+const failureStore = new Map<string, { count: number; resetAt: number }>();
+const challengeStore = new Map<string, { answer: number; resetAt: number }>();
 const CLEANUP_INTERVAL = 60_000;
+const CHALLENGE_TTL = 5 * 60 * 1000; // 5 min
+const FAILURE_THRESHOLD = 3;
+
 let lastCleanup = Date.now();
 
 const securityBuffer: Array<{ t: number; e: string; d: Record<string, unknown> }> = [];
-const MAX_BUFFER = 500;
+const MAX_BUFFER = 1000;
 
 function cleanup() {
   const now = Date.now();
@@ -16,6 +21,12 @@ function cleanup() {
   lastCleanup = now;
   for (const [key, data] of store.entries()) {
     if (data.resetAt < now) store.delete(key);
+  }
+  for (const [key, data] of failureStore.entries()) {
+    if (data.resetAt < now) failureStore.delete(key);
+  }
+  for (const [key, data] of challengeStore.entries()) {
+    if (data.resetAt < now) challengeStore.delete(key);
   }
 }
 
@@ -26,9 +37,92 @@ export function securityLog(event: string, data: Record<string, unknown> = {}) {
   const entry = { t: Date.now(), e: event, d: data };
   securityBuffer.push(entry);
   if (securityBuffer.length > MAX_BUFFER) securityBuffer.shift();
+  const logData = { ...data, event };
   if (process.env.NODE_ENV === "development") {
-    console.warn("[security]", event, data);
+    console.warn("[security]", logData);
   }
+}
+
+/** Log 429 with full context for brute-force analysis */
+export function securityLog429(
+  prefix: string,
+  ip: string,
+  identifier: string | null,
+  endpoint: string
+) {
+  securityLog("security_429", { prefix, ip: ip.slice(0, 16), id: identifier?.slice(0, 8), endpoint });
+}
+
+/** Log brute-force pattern: many failures for same target or from same IP */
+export function securityLogBruteForce(
+  pattern: "same_target_multi_ip" | "same_ip_multi_target" | "repeated_failures",
+  data: Record<string, unknown>
+) {
+  securityLog("brute_force", { pattern, ...data });
+}
+
+/** Record auth failure, return whether challenge is now required */
+export function recordAuthFailure(
+  prefix: string,
+  ip: string,
+  identifier: string
+): { failures: number; requireChallenge: boolean } {
+  cleanup();
+  const now = Date.now();
+  const key = `${prefix}:fail:${ip}:${identifier}`;
+  const entry = failureStore.get(key);
+
+  if (!entry || entry.resetAt < now) {
+    failureStore.set(key, { count: 1, resetAt: now + 60_000 });
+    return { failures: 1, requireChallenge: false };
+  }
+  entry.count++;
+  const requireChallenge = entry.count >= FAILURE_THRESHOLD;
+  if (requireChallenge && entry.count === FAILURE_THRESHOLD) {
+    securityLogBruteForce("repeated_failures", {
+      prefix,
+      ip: ip.slice(0, 12),
+      id: identifier.slice(0, 8),
+      count: entry.count,
+    });
+  }
+  return { failures: entry.count, requireChallenge };
+}
+
+export function getAuthFailures(prefix: string, ip: string, identifier: string): number {
+  const key = `${prefix}:fail:${ip}:${identifier}`;
+  const entry = failureStore.get(key);
+  if (!entry || entry.resetAt < Date.now()) return 0;
+  return entry.count;
+}
+
+export function clearAuthFailures(prefix: string, ip: string, identifier: string) {
+  failureStore.delete(`${prefix}:fail:${ip}:${identifier}`);
+}
+
+export function needsChallenge(prefix: string, ip: string, identifier: string): boolean {
+  return getAuthFailures(prefix, ip, identifier) >= FAILURE_THRESHOLD;
+}
+
+/** Create a challenge, returns { id, question } */
+export function createChallenge(): { id: string; question: string } {
+  cleanup();
+  const a = Math.floor(Math.random() * 10) + 1;
+  const b = Math.floor(Math.random() * 10) + 1;
+  const id = `c_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  challengeStore.set(id, { answer: a + b, resetAt: Date.now() + CHALLENGE_TTL });
+  return { id, question: `Скільки буде ${a} + ${b}?` };
+}
+
+/** Verify challenge, consumes it on success */
+export function verifyChallenge(id: string, answer: string | number): boolean {
+  cleanup();
+  const entry = challengeStore.get(id);
+  if (!entry || entry.resetAt < Date.now()) return false;
+  const expected = entry.answer;
+  const got = typeof answer === "string" ? parseInt(answer, 10) : answer;
+  challengeStore.delete(id);
+  return !Number.isNaN(got) && got === expected;
 }
 
 export async function rateLimit(
@@ -73,13 +167,15 @@ export async function rateLimitComposite(
   const ipResult = await rateLimit(`${prefix}:ip:${ip}`, ipLimit, windowMs);
   if (!ipResult.ok) {
     securityLog("rate_limit", { prefix, by: "ip", ip: ip.slice(0, 12) });
+    securityLog429(prefix, ip, identifier ?? null, prefix);
     return { ok: false };
   }
   if (identifier) {
     const idKey = `${identifier}`.trim().toLowerCase().slice(0, 64);
     const idResult = await rateLimit(`${prefix}:id:${idKey}`, idLimit, windowMs);
     if (!idResult.ok) {
-      securityLog("rate_limit", { prefix, by: "identifier" });
+      securityLog("rate_limit", { prefix, by: "identifier", id: idKey.slice(0, 8) });
+      securityLog429(prefix, ip, idKey, prefix);
       return { ok: false };
     }
   }

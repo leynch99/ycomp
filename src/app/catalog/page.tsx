@@ -8,12 +8,18 @@ import { CatalogFilters } from "@/components/CatalogFilters";
 import { CatalogSort } from "@/components/CatalogSort";
 import { Pagination } from "@/components/Pagination";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { buildCatalogCanonical } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Каталог",
-  description: "Компʼютерні комплектуючі — процесори, відеокарти, материнські плати, RAM, SSD. Підбір за параметрами.",
-  openGraph: { title: "Каталог | YComp", url: "/catalog" },
-};
+type SearchParams = Record<string, string | string[] | undefined>;
+
+export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
+  return {
+    title: "Каталог",
+    description: "Компʼютерні комплектуючі — процесори, відеокарти, материнські плати, RAM, SSD. Підбір за параметрами.",
+    alternates: { canonical: buildCatalogCanonical("/catalog", searchParams) },
+    openGraph: { title: "Каталог | YComp", url: "/catalog" },
+  };
+}
 
 export default async function CatalogPage({
   searchParams,

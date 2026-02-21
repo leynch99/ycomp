@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { logExternalService } from "@/lib/logger";
+import { withApiLog } from "@/lib/api-with-logging";
 
 const UP_API = "https://www.ukrposhta.ua/address-classifier-ws";
 
-export async function GET(request: Request) {
+async function upCitiesHandler(request: Request) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q")?.trim();
   if (!q || q.length < 2) return NextResponse.json({ cities: [] });
@@ -10,6 +12,7 @@ export async function GET(request: Request) {
   const bearerToken = process.env.UKRPOSHTA_API_KEY;
 
   if (bearerToken) {
+    const start = Date.now();
     try {
       const res = await fetch(
         `${UP_API}/get_city_by_name?city_name=${encodeURIComponent(q)}`,
@@ -32,7 +35,11 @@ export async function GET(request: Request) {
         return NextResponse.json({ cities });
       }
     } catch (e) {
-      console.error("[UP cities]", e);
+      logExternalService("up_cities", {
+        success: false,
+        latencyMs: Date.now() - start,
+        error: e instanceof Error ? e.message : String(e),
+      });
     }
   }
 
@@ -47,3 +54,5 @@ export async function GET(request: Request) {
     cities: cities.map((c) => ({ id: c.id, name: c.name, region: c.region })),
   });
 }
+
+export const GET = withApiLog(upCitiesHandler);
