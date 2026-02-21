@@ -3,14 +3,20 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { rateLimitComposite, normalizePhone } from "@/lib/rate-limit";
 import { withApiLog } from "@/lib/api-with-logging";
+import { emitSecurityEvent, maskEmail, maskPhone } from "@/lib/security-telemetry";
 
 async function ordersHandler(request: Request) {
   const body = await request.json();
   const phone = String(body?.phone ?? "").trim();
   const email = String(body?.email ?? "").trim().toLowerCase();
   const id = phone ? normalizePhone(phone) : email || null;
+
   const { ok: allowed } = await rateLimitComposite(request, "order", id, 10, 5, 60_000);
-  if (!allowed) return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
+  if (!allowed) {
+    emitSecurityEvent("rate_limit_block", { endpoint: "order" });
+    return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
+  }
+
   const items = body.items as Array<{
     id: string;
     name: string;
@@ -31,6 +37,11 @@ async function ordersHandler(request: Request) {
 
   for (const item of items) {
     if (!productMap.has(item.id)) {
+      emitSecurityEvent("order_validation_failed", {
+        reason: "product_not_found",
+        productId: item.id,
+        identifier: id ? (phone ? maskPhone(phone) : maskEmail(email)) : undefined,
+      });
       return NextResponse.json({ error: "Product not found" }, { status: 400 });
     }
   }
@@ -71,6 +82,11 @@ async function ordersHandler(request: Request) {
     },
   });
 
+  emitSecurityEvent("order_created", {
+    orderId: order.id,
+    number: order.number,
+    identifier: id ? (phone ? maskPhone(phone) : maskEmail(email)) : undefined,
+  });
   return NextResponse.json({ id: order.id, number: order.number });
 }
 

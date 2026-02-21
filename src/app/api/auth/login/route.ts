@@ -12,6 +12,7 @@ import {
   securityLog429,
 } from "@/lib/rate-limit";
 import { withApiLog } from "@/lib/api-with-logging";
+import { emitSecurityEvent, maskEmail } from "@/lib/security-telemetry";
 
 async function loginHandler(request: Request) {
   const body = await request.json();
@@ -21,11 +22,12 @@ async function loginHandler(request: Request) {
   const challengeAnswer = body?.challengeAnswer;
 
   const ip = getClientIp(request);
+  emitSecurityEvent("auth_attempt", { ip: ip.slice(0, 12), email: maskEmail(email || "?") });
 
-  // Rate limit (IP + email)
   const { ok: allowed } = await rateLimitComposite(request, "login", email, 5, 5, 60_000);
   if (!allowed) {
     securityLog429("login", ip, email, "login");
+    emitSecurityEvent("rate_limit_block", { ip: ip.slice(0, 12), endpoint: "login" });
     return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
   }
 
@@ -33,7 +35,6 @@ async function loginHandler(request: Request) {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
   }
 
-  // Check if challenge required (after N failures)
   const mustChallenge = needsChallenge("login", ip, email);
   if (mustChallenge) {
     if (!challengeId || challengeAnswer === undefined || challengeAnswer === "") {
@@ -68,6 +69,7 @@ async function loginHandler(request: Request) {
 
   clearAuthFailures("login", ip, email);
   await createSessionCookie({ userId: user.id, role: user.role, email: user.email });
+  emitSecurityEvent("auth_success", { ip: ip.slice(0, 12), email: maskEmail(email) });
   return NextResponse.json({ id: user.id });
 }
 

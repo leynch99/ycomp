@@ -13,6 +13,7 @@ import {
   securityLog429,
 } from "@/lib/rate-limit";
 import { withApiLog } from "@/lib/api-with-logging";
+import { emitSecurityEvent, maskEmail, maskPhone } from "@/lib/security-telemetry";
 
 async function registerHandler(request: Request) {
   try {
@@ -28,10 +29,16 @@ async function registerHandler(request: Request) {
 
     const identifier = email || normalizePhone(phone);
     const ip = getClientIp(request);
+    emitSecurityEvent("auth_attempt", {
+      ip: ip.slice(0, 12),
+      type: "register",
+      identifier: email ? maskEmail(email) : maskPhone(phone || "?"),
+    });
 
     const { ok: allowed } = await rateLimitComposite(request, "register", identifier, 3, 3, 60_000);
     if (!allowed) {
       securityLog429("register", ip, identifier, "register");
+      emitSecurityEvent("rate_limit_block", { ip: ip.slice(0, 12), endpoint: "register" });
       return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
     }
 
@@ -80,6 +87,11 @@ async function registerHandler(request: Request) {
     });
     if (identifier) clearAuthFailures("register", ip, identifier);
     await createSessionCookie({ userId: user.id, role: user.role, email: user.email });
+    emitSecurityEvent("auth_success", {
+      ip: ip.slice(0, 12),
+      type: "register",
+      identifier: maskEmail(email),
+    });
     return NextResponse.json({ id: user.id });
   } catch (e) {
     try {

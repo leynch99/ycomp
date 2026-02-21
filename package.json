@@ -8,9 +8,12 @@
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:smoke": "node --test tests/api-smoke.test.mjs tests/api-critical.test.mjs",
     "perf": "lhci autorun",
-    "perf:lh": "npx lighthouse --output=html --output-path=./lighthouse-report.html"
+    "perf:lh": "npx lighthouse --output=html --output-path=./lighthouse-report.html",
+    "test:smoke-api": "node scripts/smoke-api.mjs"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"
@@ -18,6 +21,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
+    "@sentry/nextjs": "^10.0.0",
     "@vercel/blob": "^2.2.0",
     "bcryptjs": "^3.0.3",
     "jose": "^6.1.3",
@@ -27,20 +31,26 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hot-toast": "^2.6.0",
-    "react-markdown": "^10.1.0",
-    "@sentry/nextjs": "^10.0.0"
+    "react-markdown": "^10.1.0"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.14.0",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/pg": "^8.16.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.1.4",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "jsdom": "^28.1.0",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "@lhci/cli": "^0.14.0"
+    "vitest": "^4.0.18"
   }
 }

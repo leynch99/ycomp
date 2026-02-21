@@ -34,17 +34,39 @@ describe("API smoke", () => {
   });
 
   describe("GET /api/search", () => {
-    it("returns 200 and has suggestions + products", async () => {
+    it("returns 200 and has items array", async () => {
       const { status, body } = await fetchJson(`${BASE}/api/search?q=test`);
       assert.strictEqual(status, 200);
-      assert.ok(Array.isArray(body.suggestions));
-      assert.ok(Array.isArray(body.products));
+      assert.ok(Array.isArray(body.items));
     });
-    it("returns empty arrays for empty query", async () => {
+    it("returns empty items for empty query", async () => {
       const { status, body } = await fetchJson(`${BASE}/api/search?q=`);
       assert.strictEqual(status, 200);
-      assert.deepStrictEqual(body.suggestions, []);
-      assert.deepStrictEqual(body.products, []);
+      assert.deepStrictEqual(body.items, []);
+    });
+    it("returns items with shape: id, name, slug, salePrice, image, matchType", async () => {
+      const { status, body } = await fetchJson(`${BASE}/api/search?q=test`);
+      assert.strictEqual(status, 200);
+      assert.ok(Array.isArray(body.items));
+      const validMatchTypes = ["sku_exact", "name_prefix", "name_contains", "brand_contains"];
+      for (const item of body.items) {
+        assert.ok(typeof item.id === "string", "item.id must be string");
+        assert.ok(typeof item.name === "string", "item.name must be string");
+        assert.ok(typeof item.slug === "string", "item.slug must be string");
+        assert.ok(typeof item.salePrice === "number", "item.salePrice must be number");
+        assert.ok(item.image === null || typeof item.image === "string", "item.image must be null or string");
+        assert.ok(validMatchTypes.includes(item.matchType), `item.matchType must be one of ${validMatchTypes.join(", ")}`);
+      }
+    });
+    it("exact SKU match ranks higher", async () => {
+      const { status, body } = await fetchJson(`${BASE}/api/search?q=test`);
+      assert.strictEqual(status, 200);
+      if (body.items.length < 2) return;
+      const skuExactIdx = body.items.findIndex((i) => i.matchType === "sku_exact");
+      const nameIdx = body.items.findIndex((i) => i.matchType === "name_prefix" || i.matchType === "name_contains");
+      if (skuExactIdx >= 0 && nameIdx >= 0) {
+        assert.ok(skuExactIdx < nameIdx, "sku_exact should rank above name matches");
+      }
     });
   });
 
