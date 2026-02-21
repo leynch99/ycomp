@@ -7,7 +7,8 @@
     "build": "next build",
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:smoke": "node --test tests/api-smoke.test.mjs"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"

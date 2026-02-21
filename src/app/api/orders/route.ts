@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { rateLimitComposite, normalizePhone } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
-  const ip = getClientIp(request);
-  const { ok: allowed } = await rateLimit(`order:${ip}`, 10, 60_000);
-  if (!allowed) return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
-
   const body = await request.json();
+  const phone = String(body?.phone ?? "").trim();
+  const email = String(body?.email ?? "").trim().toLowerCase();
+  const id = phone ? normalizePhone(phone) : email || null;
+  const { ok: allowed } = await rateLimitComposite(request, "order", id, 10, 5, 60_000);
+  if (!allowed) return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
   const items = body.items as Array<{
     id: string;
     name: string;

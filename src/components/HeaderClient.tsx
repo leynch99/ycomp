@@ -13,6 +13,14 @@ type Category = {
   slug: string;
 };
 
+type SearchProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  salePrice: number;
+  image: string | null;
+};
+
 type User = {
   id: string;
   email: string;
@@ -37,17 +45,20 @@ export function HeaderClient({
   const [mobileSearch, setMobileSearch] = useState(false);
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Category[]>([]);
+  const [searchProducts, setSearchProducts] = useState<SearchProduct[]>([]);
 
   useEffect(() => {
     const id = setTimeout(async () => {
       if (!query.trim()) {
         setSuggestions([]);
+        setSearchProducts([]);
         return;
       }
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
       if (!res.ok) return;
-      const data = (await res.json()) as { suggestions: Category[] };
+      const data = (await res.json()) as { suggestions?: Category[]; products?: SearchProduct[] };
       setSuggestions(data.suggestions ?? []);
+      setSearchProducts(data.products ?? []);
     }, 250);
     return () => clearTimeout(id);
   }, [query]);
@@ -125,17 +136,43 @@ export function HeaderClient({
           placeholder={`${t(lang, "search")}...`}
           className="w-full rounded-full border border-slate-200 bg-white px-9 py-2 text-xs text-slate-700 focus:border-[var(--lilac-500)] focus:outline-none"
         />
-        {suggestions.length > 0 && (
-          <div className="absolute left-0 right-0 top-11 z-40 rounded-2xl border bg-white p-2 text-sm shadow-lg">
-            {suggestions.map((item) => (
-              <Link
-                key={item.id}
-                href={`/c/${item.slug}`}
-                className="block rounded-lg px-3 py-2 hover:bg-slate-50"
-              >
-                {item.name}
-              </Link>
-            ))}
+        {(suggestions.length > 0 || searchProducts.length > 0) && (
+          <div className="absolute left-0 right-0 top-11 z-40 max-h-80 overflow-y-auto rounded-2xl border bg-white p-2 text-sm shadow-lg">
+            {searchProducts.length > 0 && (
+              <>
+                <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Товари</div>
+                {searchProducts.map((p) => (
+                  <Link
+                    key={p.id}
+                    href={`/p/${p.slug}`}
+                    className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 hover:bg-slate-50"
+                  >
+                    <span className="truncate">{p.name}</span>
+                    <span className="shrink-0 font-medium text-slate-600">{p.salePrice.toLocaleString("uk-UA")} ₴</span>
+                  </Link>
+                ))}
+              </>
+            )}
+            {suggestions.length > 0 && (
+              <>
+                <div className="mb-2 mt-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Категорії</div>
+                {suggestions.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/c/${item.slug}`}
+                    className="block rounded-lg px-3 py-2 hover:bg-slate-50"
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </>
+            )}
+            <Link
+              href={`/catalog?q=${encodeURIComponent(query)}`}
+              className="mt-2 block rounded-lg border-t border-slate-100 px-3 py-2 text-center text-xs text-lilac hover:bg-[var(--lilac-50)]"
+            >
+              Всі результати →
+            </Link>
           </div>
         )}
       </div>
@@ -245,18 +282,46 @@ export function HeaderClient({
               autoFocus
               className="w-full rounded-full border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-700 focus:border-[var(--lilac-500)] focus:outline-none"
             />
-            {suggestions.length > 0 && (
-              <div className="absolute left-0 right-0 top-12 z-40 rounded-2xl border bg-white p-2 text-sm shadow-lg">
-                {suggestions.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/c/${item.slug}`}
-                    onClick={() => setMobileSearch(false)}
-                    className="block rounded-lg px-3 py-2 hover:bg-slate-50"
-                  >
-                    {item.name}
-                  </Link>
-                ))}
+            {(suggestions.length > 0 || searchProducts.length > 0) && (
+              <div className="absolute left-0 right-0 top-12 z-40 max-h-80 overflow-y-auto rounded-2xl border bg-white p-2 text-sm shadow-lg">
+                {searchProducts.length > 0 && (
+                  <>
+                    <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Товари</div>
+                    {searchProducts.map((p) => (
+                      <Link
+                        key={p.id}
+                        href={`/p/${p.slug}`}
+                        onClick={() => setMobileSearch(false)}
+                        className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 hover:bg-slate-50"
+                      >
+                        <span className="truncate">{p.name}</span>
+                        <span className="shrink-0 font-medium text-slate-600">{p.salePrice.toLocaleString("uk-UA")} ₴</span>
+                      </Link>
+                    ))}
+                  </>
+                )}
+                {suggestions.length > 0 && (
+                  <>
+                    <div className="mb-2 mt-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Категорії</div>
+                    {suggestions.map((item) => (
+                      <Link
+                        key={item.id}
+                        href={`/c/${item.slug}`}
+                        onClick={() => setMobileSearch(false)}
+                        className="block rounded-lg px-3 py-2 hover:bg-slate-50"
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                  </>
+                )}
+                <Link
+                  href={`/catalog?q=${encodeURIComponent(query)}`}
+                  onClick={() => setMobileSearch(false)}
+                  className="mt-2 block rounded-lg border-t border-slate-100 px-3 py-2 text-center text-xs text-lilac hover:bg-[var(--lilac-50)]"
+                >
+                  Всі результати →
+                </Link>
               </div>
             )}
           </div>

@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createSessionCookie, hashPassword } from "@/lib/auth";
-import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { rateLimitComposite, normalizePhone } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
-    const ip = getClientIp(request);
-    const { ok: allowed } = await rateLimit(`register:${ip}`, 3, 60_000);
-    if (!allowed) return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
-
     const body = await request.json();
     const lastName = String(body?.lastName ?? "").trim().slice(0, 50);
     const firstName = String(body?.firstName ?? "").trim().slice(0, 50);
@@ -16,6 +12,9 @@ export async function POST(request: Request) {
     const email = String(body?.email ?? "").trim().toLowerCase().slice(0, 255);
     const password = body?.password;
     const confirmPassword = body?.confirmPassword;
+
+    const { ok: allowed } = await rateLimitComposite(request, "register", email || normalizePhone(phone), 3, 3, 60_000);
+    if (!allowed) return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
 
     if (!lastName || !firstName) {
       return NextResponse.json({ error: "name_required" }, { status: 400 });

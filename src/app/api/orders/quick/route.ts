@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { rateLimitComposite, normalizePhone } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
-  const ip = getClientIp(request);
-  const { ok: allowed } = await rateLimit(`quick-order:${ip}`, 3, 60_000);
-  if (!allowed) return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
-
   const body = await request.json();
+  const phone = String(body?.phone ?? "").trim();
+  const { ok: allowed } = await rateLimitComposite(request, "quick-order", normalizePhone(phone), 3, 3, 60_000);
+  if (!allowed) return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
   const name = String(body?.name ?? "").trim().slice(0, 100);
-  const phone = String(body?.phone ?? "").trim().slice(0, 20);
   const productId = String(body?.productId ?? "");
 
   if (!name || !phone || !productId) {
@@ -24,7 +22,7 @@ export async function POST(request: Request) {
       number: `QO-${Date.now().toString().slice(-8)}`,
       status: "NEW",
       customerName: name,
-      phone,
+      phone: phone.slice(0, 20),
       email: "",
       city: "",
       npBranch: "",

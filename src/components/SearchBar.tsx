@@ -24,8 +24,8 @@ export function SearchBar() {
     const handle = setTimeout(async () => {
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
       if (!res.ok) return;
-      const data = (await res.json()) as { items: SearchItem[] };
-      setResults(data.items);
+      const data = (await res.json()) as { products?: SearchItem[] };
+      setResults(data.products ?? []);
       setOpen(true);
     }, 250);
     return () => clearTimeout(handle);
