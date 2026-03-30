@@ -55,14 +55,33 @@ export function Footer() {
               <li><Link href="/blog">Блог</Link></li>
             </ul>
             <div className="mt-3 flex gap-2 sm:mt-4">
-              {["IG", "FB", "YT"].map((item) => (
-                <div
-                  key={item}
-                  className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-[9px] text-slate-500 sm:h-8 sm:w-8 sm:text-[10px]"
-                >
-                  {item}
-                </div>
-              ))}
+              <a
+                href="https://instagram.com/ycomp.ua"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-[var(--lilac-500)] hover:text-[var(--lilac-700)]"
+                aria-label="Instagram"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="5" /><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" /></svg>
+              </a>
+              <a
+                href="https://facebook.com/ycomp.ua"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-[var(--lilac-500)] hover:text-[var(--lilac-700)]"
+                aria-label="Facebook"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3V2z" /></svg>
+              </a>
+              <a
+                href="https://youtube.com/@ycomp_ua"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-[var(--lilac-500)] hover:text-[var(--lilac-700)]"
+                aria-label="YouTube"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19.1c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.35 29 29 0 0 0-.46-5.33zM9.75 15.02V8.48l5.75 3.27-5.75 3.27z" /></svg>
+              </a>
             </div>
           </div>
         </div>

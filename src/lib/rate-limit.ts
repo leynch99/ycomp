@@ -1,7 +1,37 @@
 /**
- * In-memory rate limiter with IP + email/phone composite limits.
+ * Rate limiter with IP + email/phone composite limits.
  * Challenge-after-N-failures, security telemetry.
+ *
+ * ⚠️  WARNING: Default store is in-memory — it does NOT persist across
+ * serverless invocations (Vercel). In production, replace with
+ * Upstash Redis or Vercel KV by implementing RateLimitStore.
+ *
+ * Example with Upstash:
+ *   import { Redis } from "@upstash/redis";
+ *   const redis = Redis.fromEnv();
+ *   setRateLimitStore({ async get(k) { return redis.get(k); }, ... });
  */
+
+export interface RateLimitStore {
+  get(key: string): Promise<{ count: number; resetAt: number } | null>;
+  set(key: string, data: { count: number; resetAt: number }): Promise<void>;
+  delete(key: string): Promise<void>;
+}
+
+// --- In-memory store (default, dev-only) ---
+const memoryMap = new Map<string, { count: number; resetAt: number }>();
+const inMemoryStore: RateLimitStore = {
+  async get(key) { return memoryMap.get(key) ?? null; },
+  async set(key, data) { memoryMap.set(key, data); },
+  async delete(key) { memoryMap.delete(key); },
+};
+
+let activeStore: RateLimitStore = inMemoryStore;
+
+/** Swap in a production-ready store (Upstash Redis, Vercel KV, etc.) */
+export function setRateLimitStore(store: RateLimitStore) {
+  activeStore = store;
+}
 
 const store = new Map<string, { count: number; resetAt: number }>();
 const failureStore = new Map<string, { count: number; resetAt: number }>();

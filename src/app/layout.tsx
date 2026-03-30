@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -10,14 +10,16 @@ import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 
 export const runtime = "nodejs";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["cyrillic", "latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ycomp.ua";
@@ -54,7 +56,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="uk">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${inter.variable} ${outfit.variable} font-sans antialiased text-foreground bg-background transition-colors duration-300`}>
         <Providers>
           <GoogleAnalytics />
           <WebVitalsReporter />
@@ -91,7 +93,7 @@ export default function RootLayout({
             }}
           />
           <Header />
-          <main className="min-h-screen bg-white">{children}</main>
+          <main className="min-h-screen">{children}</main>
           <Footer />
           <QuickContactWidget />
         </Providers>

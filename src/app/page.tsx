@@ -56,17 +56,17 @@ export default async function Home() {
   return (
     <div className="space-y-12 sm:space-y-20">
       {/* Static Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-white via-[var(--lilac-50)] to-white py-6 sm:py-10">
-        <div className="pointer-events-none absolute -left-24 top-10 h-40 w-40 rounded-full bg-[var(--lilac-100)] blur-xl sm:h-72 sm:w-72 sm:blur-3xl" />
-        <div className="pointer-events-none absolute -right-20 bottom-0 h-40 w-40 rounded-full bg-[var(--lilac-100)] blur-xl sm:h-72 sm:w-72 sm:blur-3xl" />
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="grid gap-6 rounded-2xl border border-lilac bg-gradient-to-br from-[var(--lilac-50)] via-white to-[var(--lilac-100)] p-5 shadow-sm sm:gap-8 sm:rounded-3xl sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="relative overflow-hidden bg-gradient-to-br from-white via-[var(--lilac-50)] to-white dark:from-slate-950 dark:via-slate-900/40 dark:to-slate-950 py-6 sm:py-10">
+        <div className="pointer-events-none absolute -left-24 top-10 h-40 w-40 rounded-full bg-[var(--lilac-100)] dark:bg-lilac-900/30 blur-xl sm:h-72 sm:w-72 sm:blur-3xl animate-pulse" />
+        <div className="pointer-events-none absolute -right-20 bottom-0 h-40 w-40 rounded-full bg-[var(--lilac-100)] dark:bg-lilac-900/30 blur-xl sm:h-72 sm:w-72 sm:blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="mx-auto relative z-10 max-w-7xl px-4">
+          <div className="grid gap-6 rounded-2xl border border-lilac/30 dark:border-white/10 bg-gradient-to-br from-[var(--lilac-50)]/90 via-white/90 to-[var(--lilac-100)]/90 dark:from-slate-800/50 dark:via-slate-900/50 dark:to-slate-800/50 backdrop-blur-2xl p-5 shadow-2xl sm:gap-8 sm:rounded-3xl sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-4 sm:space-y-6">
-              <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400 sm:text-xs">ycomp.ua</div>
-              <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+              <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 sm:text-xs">ycomp.ua</div>
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-4xl lg:text-5xl">
                 Інтернет-магазин компʼютерних комплектуючих
               </h1>
-              <p className="text-sm text-slate-600 sm:text-base">
+              <p className="text-sm text-slate-600 dark:text-slate-300 sm:text-base">
                 Швидкий підбір, перевірка сумісності, доставка Новою Поштою та сервіс.
               </p>
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -89,14 +89,14 @@ export default async function Home() {
                   { value: "1–3", label: "дні доставки" },
                   { value: "14 днів", label: "на повернення" },
                 ].map((item) => (
-                  <div key={item.label} className="rounded-xl border border-white/60 bg-white/70 px-3 py-2 sm:rounded-2xl sm:px-4 sm:py-3">
-                    <div className="text-sm font-semibold text-slate-900 sm:text-lg">{item.value}</div>
-                    <div className="text-[10px] text-slate-500 sm:text-xs">{item.label}</div>
+                  <div key={item.label} className="rounded-xl border border-white/60 dark:border-white/5 bg-white/70 dark:bg-white/5 backdrop-blur-md px-3 py-2 sm:rounded-2xl sm:px-4 sm:py-3 transition hover:scale-105">
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white sm:text-lg">{item.value}</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 sm:text-xs">{item.label}</div>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="hidden rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-lilac sm:block">
+            <div className="hidden rounded-3xl bg-white/80 dark:bg-slate-900/60 p-6 shadow-sm ring-1 ring-lilac/50 dark:ring-white/10 sm:block">
               <div className="text-sm font-medium text-slate-700">Пошук комплектуючих</div>
               <div className="mt-4 rounded-2xl border border-lilac bg-white p-5">
                 <div className="text-xs uppercase text-slate-400">Популярні запити</div>
@@ -198,12 +198,12 @@ export default async function Home() {
       )}
 
       {/* Bestsellers */}
-      <section className="bg-white py-4">
+      <section className="bg-transparent py-4">
         <div className="mx-auto max-w-7xl px-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Хіти продажу</h2>
-            <Link href="/catalog" className="text-xs text-slate-500 sm:text-sm">
-              Дивитися всі
+            <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-2xl">Хіти продажу</h2>
+            <Link href="/catalog" className="text-xs text-slate-500 hover:text-lilac-500 dark:text-slate-400 dark:hover:text-lilac-400 transition sm:text-sm">
+              Дивитися всі →
             </Link>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-4">
@@ -233,19 +233,19 @@ export default async function Home() {
       </section>
 
       {/* Popular categories */}
-      <section className="bg-[var(--lilac-50)] py-8 sm:py-10">
+      <section className="bg-[var(--lilac-50)] dark:bg-slate-900/30 py-8 sm:py-12 border-y border-lilac-200/40 dark:border-white/5">
         <div className="mx-auto max-w-7xl px-4">
-          <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Популярні категорії</h2>
+          <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-2xl">Популярні категорії</h2>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-4">
             {categories.map((cat) => (
               <Link
                 key={cat.id}
                 href={`/c/${cat.slug}`}
-                className="rounded-xl border border-slate-200/70 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md sm:rounded-2xl sm:p-6"
+                className="group rounded-xl border border-slate-200/70 dark:border-white/5 bg-white dark:bg-slate-800/80 p-4 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-lilac-500/10 dark:hover:shadow-lilac-500/20 sm:rounded-2xl sm:p-6"
               >
-                <div className="text-[10px] uppercase text-slate-400 sm:text-xs">Категорія</div>
-                <div className="mt-1 text-sm font-semibold text-slate-900 sm:mt-2 sm:text-lg">{cat.name}</div>
-                <div className="mt-2 text-[10px] text-slate-500 sm:mt-4 sm:text-xs">Дивитися товари →</div>
+                <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 sm:text-xs">Категорія</div>
+                <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white sm:mt-2 sm:text-lg">{cat.name}</div>
+                <div className="mt-2 text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-lilac-500 transition-colors sm:mt-4 sm:text-xs">Дивитися товари →</div>
               </Link>
             ))}
           </div>
@@ -253,12 +253,12 @@ export default async function Home() {
       </section>
 
       {/* Deals */}
-      <section className="bg-white py-4 sm:py-6">
+      <section className="bg-transparent py-4 sm:py-6">
         <div className="mx-auto max-w-7xl px-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Акції</h2>
-            <Link href="/deals" className="text-xs text-slate-500 sm:text-sm">
-              Всі акції
+            <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-2xl">Акції</h2>
+            <Link href="/deals" className="text-xs text-slate-500 hover:text-lilac-500 dark:text-slate-400 dark:hover:text-lilac-400 transition sm:text-sm">
+              Всі акції →
             </Link>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-3">
@@ -289,18 +289,18 @@ export default async function Home() {
 
       {/* Kits */}
       <section className="mx-auto max-w-7xl px-4">
-        <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Готові комплекти</h2>
+        <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-2xl">Готові комплекти</h2>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-4">
           {kits.map((kit) => (
-            <div key={kit.title} className="rounded-xl border bg-white p-4 sm:rounded-2xl sm:p-6">
-              <div className="text-[10px] text-slate-500 sm:text-sm">Набір</div>
-              <div className="mt-1 text-sm font-semibold sm:mt-2 sm:text-lg">{kit.title}</div>
-              <div className="mt-2 text-xs text-slate-600 sm:mt-4 sm:text-sm">
+            <div key={kit.title} className="rounded-xl border border-slate-200/70 dark:border-white/5 bg-white dark:bg-slate-800/80 p-4 transition duration-300 hover:shadow-xl dark:hover:shadow-white/5 sm:rounded-2xl sm:p-6">
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 sm:text-sm">Набір</div>
+              <div className="mt-1 text-sm font-semibold dark:text-white sm:mt-2 sm:text-lg">{kit.title}</div>
+              <div className="mt-2 text-xs font-medium text-slate-900 dark:text-slate-200 sm:mt-4 sm:text-sm">
                 від {formatPrice(kit.price)}
               </div>
               <Link
                 href="/configurator"
-                className="mt-3 inline-flex rounded-full border px-3 py-1.5 text-[10px] sm:mt-4 sm:px-4 sm:py-2 sm:text-xs"
+                className="mt-3 inline-flex rounded-full border border-lilac-200 dark:border-white/10 dark:text-slate-200 px-3 py-1.5 text-[10px] transition hover:border-lilac-500 hover:text-lilac-600 dark:hover:border-lilac-400 dark:hover:text-lilac-400 sm:mt-4 sm:px-4 sm:py-2 sm:text-xs"
               >
                 Зібрати
               </Link>

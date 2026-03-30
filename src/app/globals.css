@@ -2,7 +2,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0f172a; /* slate-900 */
   --lilac-50: #f6f2ff;
   --lilac-100: #eee9ff;
   --lilac-300: #c9bdf8;
@@ -11,45 +11,41 @@
   --lilac-900: #3c2c7a;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #020617; /* slate-950 */
+    --foreground: #f8fafc; /* slate-50 */
+    --lilac-50: #1b1633;
+    --lilac-100: #29214d;
+    --lilac-300: #5b4acf;
+    --lilac-500: #7c6ae6;
+    --lilac-700: #c9bdf8;
+    --lilac-900: #eee9ff;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-outfit);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), sans-serif;
 }
 
-.bg-lilac {
-  background: var(--lilac-500);
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-outfit), sans-serif;
 }
 
-.bg-lilac-soft {
-  background: var(--lilac-100);
-}
-
-.text-lilac {
-  color: var(--lilac-500);
-}
-
-.border-lilac {
-  border-color: var(--lilac-300);
-}
-
-.ring-lilac {
-  --tw-ring-color: var(--lilac-300);
-}
+.bg-lilac { background-color: var(--lilac-500); }
+.bg-lilac-soft { background-color: var(--lilac-100); }
+.text-lilac { color: var(--lilac-500); }
+.border-lilac { border-color: var(--lilac-300); }
+.ring-lilac { --tw-ring-color: var(--lilac-300); }
 
 @keyframes cartIn {
   from {

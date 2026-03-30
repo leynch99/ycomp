@@ -23,6 +23,52 @@ export const translations = {
       price: "Ціна",
       filters: "Фільтри",
       sort: "Сортування",
+      // Product labels
+      sale: "Акція",
+      discount: "Уцінка",
+      daysLabel: "днів",
+      stockLeft: "Залишилось",
+      pcs: "шт.",
+      availability: "Наявність",
+      // Homepage
+      bestsellers: "Хіти продажу",
+      popularCategories: "Популярні категорії",
+      readyKits: "Готові комплекти",
+      advantages: "Переваги",
+      viewAll: "Дивитися всі",
+      allDeals: "Всі акції",
+      allResults: "Всі результати",
+      category: "Категорія",
+      viewProducts: "Дивитися товари",
+      kit: "Набір",
+      buildPC: "Зібрати ПК",
+      selectUpgrade: "Підібрати апгрейд",
+      assemble: "Зібрати",
+      from: "від",
+      // Configurator
+      total: "Разом",
+      addAllToCart: "Додати все в кошик",
+      clear: "Очистити",
+      recommended: "рекомендовано",
+      yourBuild: "Ваша збірка",
+      needConsultation: "Потрібна консультація?",
+      // Checkout
+      contacts: "Контакти",
+      delivery: "Доставка",
+      payment: "Оплата",
+      yourOrder: "Ваше замовлення",
+      confirmOrder: "Підтвердити замовлення",
+      processing: "Оформлюємо...",
+      next: "Далі",
+      back: "Назад",
+      // Footer
+      buyers: "Покупцям",
+      services: "Сервіси",
+      company: "Компанія",
+      aboutUs: "Про нас",
+      contactsPage: "Контакти",
+      logout: "Вийти",
+      menu: "Меню",
     },
   },
   ru: {
@@ -47,10 +93,63 @@ export const translations = {
       price: "Цена",
       filters: "Фильтры",
       sort: "Сортировка",
+      // Product labels
+      sale: "Акция",
+      discount: "Уценка",
+      daysLabel: "дней",
+      stockLeft: "Осталось",
+      pcs: "шт.",
+      availability: "Наличие",
+      // Homepage
+      bestsellers: "Хиты продаж",
+      popularCategories: "Популярные категории",
+      readyKits: "Готовые комплекты",
+      advantages: "Преимущества",
+      viewAll: "Смотреть все",
+      allDeals: "Все акции",
+      allResults: "Все результаты",
+      category: "Категория",
+      viewProducts: "Смотреть товары",
+      kit: "Набор",
+      buildPC: "Собрать ПК",
+      selectUpgrade: "Подобрать апгрейд",
+      assemble: "Собрать",
+      from: "от",
+      // Configurator
+      total: "Итого",
+      addAllToCart: "Добавить всё в корзину",
+      clear: "Очистить",
+      recommended: "рекомендовано",
+      yourBuild: "Ваша сборка",
+      needConsultation: "Нужна консультация?",
+      // Checkout
+      contacts: "Контакты",
+      delivery: "Доставка",
+      payment: "Оплата",
+      yourOrder: "Ваш заказ",
+      confirmOrder: "Подтвердить заказ",
+      processing: "Оформляем...",
+      next: "Далее",
+      back: "Назад",
+      // Footer
+      buyers: "Покупателям",
+      services: "Сервисы",
+      company: "Компания",
+      aboutUs: "О нас",
+      contactsPage: "Контакты",
+      logout: "Выйти",
+      menu: "Меню",
     },
   },
 };
 
-export function t(lang: Lang, key: keyof (typeof translations)["ua"]["common"]) {
-  return translations[lang].common[key];
+type TranslationsType = {
+  [K in Lang]: {
+    common: typeof translations["ua"]["common"];
+  };
+};
+
+export function t(lang: Lang, key: keyof (typeof translations)["ua"]["common"]): string {
+  return (translations as TranslationsType)[lang].common[key];
 }
+
