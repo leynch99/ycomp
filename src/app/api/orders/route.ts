@@ -48,7 +48,7 @@ async function ordersHandler(request: Request) {
   const number = `YC-${Date.now().toString().slice(-6)}`;
   let total = 0;
   const orderItems = items.map((item) => {
-    const product = productMap.get(item.id)!;
+    const product = productMap.get(item.id) as any;
     const qty = Math.max(1, Math.min(99, Math.floor(Number(item.qty) || 1)));
     const price = product.salePrice;
     total += price * qty;
