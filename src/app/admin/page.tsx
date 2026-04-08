@@ -255,7 +255,7 @@ export default async function AdminDashboard() {
             Останні замовлення
           </h2>
           <div className="space-y-2">
-            {recentOrders.map((order) => (
+            {recentOrders.map((order: any) => (
               <a
                 key={order.id}
                 href={`/admin/orders`}
@@ -296,7 +296,7 @@ export default async function AdminDashboard() {
                 Всі товари в наявності
               </div>
             ) : (
-              lowStockProducts.map((product) => (
+              lowStockProducts.map((product: any) => (
                 <a
                   key={product.id}
                   href={`/admin/products/${product.id}`}
