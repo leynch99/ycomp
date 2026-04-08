@@ -56,7 +56,7 @@ export function withPermission(
 ) {
   return async (request: Request, context?: { params: Promise<Record<string, string>> }) => {
     const { error, user } = await requirePermission(resource, action);
-    if (error || !user) return error;
+    if (error || !user) return error!;
 
     // Log action
     const ipAddress = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
