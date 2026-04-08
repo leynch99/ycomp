@@ -205,7 +205,7 @@ export default async function AdminDashboard() {
             Статуси замовлень
           </h2>
           <div className="space-y-3">
-            {ordersByStatus.map((item) => {
+            {ordersByStatus.map((item: any) => {
               const statusLabels: Record<string, string> = {
                 NEW: "Нові",
                 CONFIRMED: "Підтверджені",
