@@ -173,7 +173,7 @@ export default async function AdminDashboard() {
             Топ товарів
           </h2>
           <div className="space-y-3">
-            {topProducts.map((item, idx) => (
+            {topProducts.map((item: any, idx: number) => (
               <div
                 key={item.productId}
                 className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3 last:border-0"
