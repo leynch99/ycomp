@@ -54,7 +54,7 @@ export default async function AdminProductEditPage({
           popularity: product.popularity,
           leadTimeMinDays: product.leadTimeMinDays ?? 1,
           leadTimeMaxDays: product.leadTimeMaxDays ?? 7,
-          images: product.images.map((img) => img.url),
+          images: product.images.map((img: any) => img.url),
         }}
       />
     </div>
