@@ -26,8 +26,8 @@ export async function InfoPage({
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <Breadcrumbs items={[{ title: "Головна", href: "/" }, { title: pageTitle }]} />
-      <h1 className="mt-4 text-2xl font-semibold">{pageTitle}</h1>
-      <div className="prose mt-6 max-w-none text-sm text-slate-700">
+      <h1 className="mt-4 text-2xl font-semibold text-slate-900 dark:text-white">{pageTitle}</h1>
+      <div className="prose dark:prose-invert mt-6 max-w-none text-sm text-slate-700 dark:text-slate-300">
         {paragraphs ?? children}
       </div>
     </div>

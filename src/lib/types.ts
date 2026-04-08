@@ -31,3 +31,21 @@ export type ProductListItem = {
 export type CartItem = ProductListItem & {
   qty: number;
 };
+
+export type OrderStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "PROCESSING"
+  | "SHIPPED"
+  | "DELIVERED"
+  | "CANCELLED"
+  | "RETURNED";
+
+export type OrderListItem = {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  total: number;
+  itemCount: number;
+  createdAt: string;
+};

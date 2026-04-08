@@ -104,27 +104,30 @@ export function HeaderClient({
       <div className="relative hidden sm:block">
         <button
           onClick={() => setOpenCatalog((v) => !v)}
-          className="rounded-full border border-lilac px-4 py-2 text-xs text-slate-700 hover:border-[var(--lilac-500)]"
+          aria-expanded={openCatalog}
+          aria-label="Каталог категорій"
+          className="rounded-full border border-lilac-300 dark:border-lilac-700 px-4 py-2 text-xs text-slate-700 dark:text-slate-200 transition-all duration-200 hover:border-lilac-500 hover:bg-lilac-50 dark:hover:bg-lilac-900/30 hover:shadow-md active:scale-95"
         >
           {t(lang, "catalog")}
         </button>
         {openCatalog && (
           <>
-            <div className="fixed inset-0 z-30" onClick={() => setOpenCatalog(false)} />
-            <div className="absolute left-0 top-12 z-40 w-72 rounded-2xl border bg-white p-4 shadow-lg">
-              <div className="grid gap-2 text-sm">
-                {categories.map((cat) => (
+            <div className="fixed inset-0 z-30 animate-fade-in" onClick={() => setOpenCatalog(false)} />
+            <div className="absolute left-0 top-12 z-40 w-72 animate-slide-down rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-4 shadow-xl dark:shadow-black/40 backdrop-blur-sm">
+              <div className="grid gap-1 text-sm">
+                {categories.map((cat, idx) => (
                   <Link
                     key={cat.id}
                     href={`/c/${cat.slug}`}
                     onClick={() => setOpenCatalog(false)}
-                    className="rounded-lg px-2 py-1 hover:bg-slate-50"
+                    style={{ animationDelay: `${idx * 20}ms` }}
+                    className="rounded-lg px-3 py-2 text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-lilac-50 dark:hover:bg-lilac-900/30 hover:translate-x-1 hover:text-lilac-600 dark:hover:text-lilac-400 animate-fade-in"
                   >
                     {cat.name}
                   </Link>
                 ))}
-                <Link href="/catalog" className="mt-2 text-xs text-slate-500" onClick={() => setOpenCatalog(false)}>
-                  Переглянути всі категорії
+                <Link href="/catalog" className="mt-2 rounded-lg px-3 py-2 text-xs text-slate-500 dark:text-slate-400 transition-colors hover:text-lilac-600 dark:hover:text-lilac-400" onClick={() => setOpenCatalog(false)}>
+                  Переглянути всі категорії →
                 </Link>
               </div>
             </div>
@@ -134,14 +137,14 @@ export function HeaderClient({
 
       {/* Desktop search */}
       <div className="relative hidden flex-1 sm:block">
-        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 transition-colors">
           <SearchIcon />
         </span>
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={`${t(lang, "search")}...`}
-          className="w-full rounded-full border border-slate-200 bg-white px-9 py-2 text-xs text-slate-700 focus:border-[var(--lilac-500)] focus:outline-none"
+          className="w-full rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-9 py-2 text-xs text-slate-700 dark:text-slate-200 transition-all duration-200 focus:border-lilac-500 focus:shadow-lg focus:shadow-lilac-500/20 focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
         />
         <SearchDropdown items={searchItems} hints={searchHints} query={query} />
       </div>
@@ -149,16 +152,16 @@ export function HeaderClient({
       {/* Desktop lang switcher */}
       <div className="ml-2 hidden items-center gap-2 text-xs sm:flex">
         <button
-          className={`rounded-full px-3 py-1 ${
-            lang === "ua" ? "bg-lilac text-white" : "border border-slate-200 text-slate-600"
+          className={`rounded-full px-3 py-1 transition-all duration-200 active:scale-95 ${
+            lang === "ua" ? "bg-gradient-to-r from-lilac-600 to-lilac-500 text-white shadow-md shadow-lilac-500/30" : "border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-lilac-300 hover:text-lilac-600 dark:hover:text-lilac-400"
           }`}
           onClick={() => switchLang("ua")}
         >
           UA
         </button>
         <button
-          className={`rounded-full px-3 py-1 ${
-            lang === "ru" ? "bg-lilac text-white" : "border border-slate-200 text-slate-600"
+          className={`rounded-full px-3 py-1 transition-all duration-200 active:scale-95 ${
+            lang === "ru" ? "bg-gradient-to-r from-lilac-600 to-lilac-500 text-white shadow-md shadow-lilac-500/30" : "border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-lilac-300 hover:text-lilac-600 dark:hover:text-lilac-400"
           }`}
           onClick={() => switchLang("ru")}
         >
@@ -239,9 +242,9 @@ export function HeaderClient({
 
       {/* Mobile search bar (slides down) */}
       {mobileSearch && (
-        <div className="absolute left-0 right-0 top-full z-50 border-b bg-white px-3 py-3 shadow-md sm:hidden">
+        <div className="absolute left-0 right-0 top-full z-50 animate-slide-down border-b border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 py-3 shadow-lg backdrop-blur-sm sm:hidden">
           <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
               <SearchIcon />
             </span>
             <input
@@ -249,7 +252,7 @@ export function HeaderClient({
               onChange={(event) => setQuery(event.target.value)}
               placeholder={`${t(lang, "search")}...`}
               autoFocus
-              className="w-full rounded-full border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-700 focus:border-[var(--lilac-500)] focus:outline-none"
+              className="w-full rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 py-2.5 pl-9 pr-3 text-sm text-slate-700 dark:text-slate-200 transition-all duration-200 focus:border-lilac-500 focus:shadow-lg focus:shadow-lilac-500/20 focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
             <SearchDropdown items={searchItems} hints={searchHints} query={query} onLinkClick={() => setMobileSearch(false)} />
           </div>
@@ -259,25 +262,26 @@ export function HeaderClient({
       {/* Mobile slide-out menu */}
       {mobileMenu && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/40 sm:hidden" onClick={() => setMobileMenu(false)} />
-          <div className="fixed inset-y-0 right-0 z-50 w-[280px] overflow-y-auto bg-white px-5 py-6 shadow-xl sm:hidden">
+          <div className="fixed inset-0 z-40 animate-fade-in bg-black/40 backdrop-blur-sm sm:hidden" onClick={() => setMobileMenu(false)} />
+          <div role="dialog" aria-label="Мобільне меню" className="fixed inset-y-0 right-0 z-50 w-[280px] overflow-y-auto bg-white dark:bg-slate-900 px-5 py-6 shadow-2xl dark:shadow-black/60 sm:hidden animate-[slideInRight_300ms_ease-out]">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-slate-900">Меню</span>
-              <button onClick={() => setMobileMenu(false)} className="text-slate-500">
+              <span className="text-sm font-semibold text-slate-900 dark:text-white">Меню</span>
+              <button onClick={() => setMobileMenu(false)} className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 dark:text-slate-400 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-90">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
 
             {/* Categories */}
             <div className="mt-6">
-              <div className="text-[10px] uppercase tracking-widest text-slate-400">Категорії</div>
+              <div className="text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500">Категорії</div>
               <div className="mt-2 space-y-1">
-                {categories.map((cat) => (
+                {categories.map((cat, idx) => (
                   <Link
                     key={cat.id}
                     href={`/c/${cat.slug}`}
                     onClick={() => setMobileMenu(false)}
-                    className="block rounded-lg px-2 py-2 text-sm text-slate-700 hover:bg-[var(--lilac-50)]"
+                    style={{ animationDelay: `${idx * 30}ms` }}
+                    className="block rounded-lg px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-lilac-50 dark:hover:bg-lilac-900/30 hover:translate-x-1 hover:text-lilac-600 dark:hover:text-lilac-400 active:scale-95 animate-fade-in"
                   >
                     {cat.name}
                   </Link>
@@ -287,7 +291,7 @@ export function HeaderClient({
 
             {/* Nav links */}
             <div className="mt-6 space-y-1">
-              <div className="text-[10px] uppercase tracking-widest text-slate-400">Сервіси</div>
+              <div className="text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500">Сервіси</div>
               {[
                 ["/deals", t(lang, "deals")],
                 ["/outlet", t(lang, "outlet")],
@@ -300,7 +304,7 @@ export function HeaderClient({
                   key={href}
                   href={href}
                   onClick={() => setMobileMenu(false)}
-                  className="block rounded-lg px-2 py-2 text-sm text-slate-700 hover:bg-[var(--lilac-50)]"
+                  className="block rounded-lg px-2 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-[var(--lilac-50)] dark:hover:bg-slate-800"
                 >
                   {label}
                 </Link>
@@ -309,17 +313,17 @@ export function HeaderClient({
 
             {/* Quick actions */}
             <div className="mt-6 grid grid-cols-3 gap-2">
-              <Link href="/wishlist" onClick={() => setMobileMenu(false)} className="flex flex-col items-center gap-1 rounded-xl border border-slate-200 py-3 text-slate-600">
+              <Link href="/wishlist" onClick={() => setMobileMenu(false)} className="flex flex-col items-center gap-1 rounded-xl border border-slate-200 dark:border-white/10 py-3 text-slate-600 dark:text-slate-300 transition-all duration-200 hover:border-lilac-300 hover:bg-lilac-50 dark:hover:bg-lilac-900/20 active:scale-95">
                 <span className="text-base">♥</span>
                 <span className="text-[10px]">{t(lang, "wishlist")}</span>
-                {wishItems.length > 0 && <span className="rounded-full bg-lilac px-1.5 text-[9px] text-white">{wishItems.length}</span>}
+                {wishItems.length > 0 && <span className="rounded-full bg-gradient-to-r from-lilac-600 to-lilac-500 px-1.5 text-[9px] text-white shadow-sm">{wishItems.length}</span>}
               </Link>
-              <Link href="/compare" onClick={() => setMobileMenu(false)} className="flex flex-col items-center gap-1 rounded-xl border border-slate-200 py-3 text-slate-600">
+              <Link href="/compare" onClick={() => setMobileMenu(false)} className="flex flex-col items-center gap-1 rounded-xl border border-slate-200 dark:border-white/10 py-3 text-slate-600 dark:text-slate-300 transition-all duration-200 hover:border-lilac-300 hover:bg-lilac-50 dark:hover:bg-lilac-900/20 active:scale-95">
                 <span className="text-base">⇄</span>
                 <span className="text-[10px]">{t(lang, "compare")}</span>
-                {compareItems.length > 0 && <span className="rounded-full bg-lilac px-1.5 text-[9px] text-white">{compareItems.length}</span>}
+                {compareItems.length > 0 && <span className="rounded-full bg-gradient-to-r from-lilac-600 to-lilac-500 px-1.5 text-[9px] text-white shadow-sm">{compareItems.length}</span>}
               </Link>
-              <Link href="/account" onClick={() => setMobileMenu(false)} className="flex flex-col items-center gap-1 rounded-xl border border-slate-200 py-3 text-slate-600">
+              <Link href="/account" onClick={() => setMobileMenu(false)} className="flex flex-col items-center gap-1 rounded-xl border border-slate-200 dark:border-white/10 py-3 text-slate-600 dark:text-slate-300 transition-all duration-200 hover:border-lilac-300 hover:bg-lilac-50 dark:hover:bg-lilac-900/20 active:scale-95">
                 <span className="text-base">👤</span>
                 <span className="text-[10px]">{user ? (user.name || "Профіль") : t(lang, "account")}</span>
               </Link>
@@ -331,7 +335,7 @@ export function HeaderClient({
                     await fetch("/api/auth/logout", { method: "POST" });
                     window.location.href = "/";
                   }}
-                  className="flex flex-col items-center gap-1 rounded-xl border border-slate-200 py-3 text-slate-600"
+                  className="flex flex-col items-center gap-1 rounded-xl border border-slate-200 dark:border-white/10 py-3 text-slate-600 dark:text-slate-300"
                 >
                   <span className="text-base">→</span>
                   <span className="text-[10px]">Вийти</span>
@@ -360,7 +364,7 @@ export function HeaderClient({
               <Link
                 href="/contacts"
                 onClick={() => setMobileMenu(false)}
-                className="block w-full rounded-full bg-lilac px-4 py-2.5 text-center text-xs text-white"
+                className="block w-full rounded-full bg-gradient-to-r from-lilac-600 to-lilac-500 px-4 py-2.5 text-center text-xs font-medium text-white shadow-lg shadow-lilac-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-lilac-500/40 active:scale-95"
               >
                 {t(lang, "consultation")}
               </Link>
@@ -395,13 +399,13 @@ function IconLink({
   return (
     <Link
       href={href}
-      className="relative flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-[12px] text-slate-600 hover:border-[var(--lilac-500)] hover:text-[var(--lilac-900)]"
+      className="relative flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 text-[12px] text-slate-600 dark:text-slate-400 transition-all duration-200 hover:border-lilac-500 hover:bg-lilac-50 dark:hover:bg-lilac-900/30 hover:text-lilac-600 dark:hover:text-lilac-400 hover:scale-110 active:scale-95"
       title={label}
       aria-label={label}
     >
       {icon}
       {badge > 0 && (
-        <span className="absolute -right-1.5 -top-1.5 rounded-full bg-lilac px-1.5 py-0.5 text-[10px] text-white">
+        <span className="absolute -right-1.5 -top-1.5 rounded-full bg-gradient-to-r from-lilac-600 to-lilac-500 px-1.5 py-0.5 text-[10px] font-medium text-white shadow-md shadow-lilac-500/40 animate-scale-in">
           {badge}
         </span>
       )}

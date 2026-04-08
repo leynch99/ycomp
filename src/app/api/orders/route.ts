@@ -4,12 +4,22 @@ import { getSessionUser } from "@/lib/auth";
 import { rateLimitComposite, normalizePhone } from "@/lib/rate-limit";
 import { withApiLog } from "@/lib/api-with-logging";
 import { emitSecurityEvent, maskEmail, maskPhone } from "@/lib/security-telemetry";
+import { validateRequest, createOrderSchema } from "@/lib/validation";
+import { notifyAdminNewOrder } from "@/lib/telegram";
+import { sendOrderConfirmationEmail } from "@/lib/email";
+import { sendOrderConfirmationSms } from "@/lib/sms";
 
 async function ordersHandler(request: Request) {
-  const body = await request.json();
-  const phone = String(body?.phone ?? "").trim();
-  const email = String(body?.email ?? "").trim().toLowerCase();
-  const id = phone ? normalizePhone(phone) : email || null;
+  // Validate request body
+  const validation = await validateRequest(request, createOrderSchema);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+
+  const body = validation.data;
+  const phone = body.phone;
+  const email = body.email;
+  const id = normalizePhone(phone);
 
   const { ok: allowed } = await rateLimitComposite(request, "order", id, 10, 5, 60_000);
   if (!allowed) {
@@ -17,18 +27,7 @@ async function ordersHandler(request: Request) {
     return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
   }
 
-  const items = body.items as Array<{
-    id: string;
-    name: string;
-    sku: string;
-    salePrice: number;
-    qty: number;
-  }>;
-
-  if (!items?.length) {
-    return NextResponse.json({ error: "Empty order" }, { status: 400 });
-  }
-
+  const items = body.items;
   const productIds = [...new Set(items.map((i) => i.id))];
   const products = await prisma.product.findMany({
     where: { id: { in: productIds } },
@@ -40,7 +39,7 @@ async function ordersHandler(request: Request) {
       emitSecurityEvent("order_validation_failed", {
         reason: "product_not_found",
         productId: item.id,
-        identifier: id ? (phone ? maskPhone(phone) : maskEmail(email)) : undefined,
+        identifier: maskPhone(phone),
       });
       return NextResponse.json({ error: "Product not found" }, { status: 400 });
     }
@@ -80,13 +79,51 @@ async function ordersHandler(request: Request) {
       userId: sessionUser?.id,
       items: { create: orderItems },
     },
+    include: {
+      items: true,
+    },
   });
 
   emitSecurityEvent("order_created", {
     orderId: order.id,
     number: order.number,
-    identifier: id ? (phone ? maskPhone(phone) : maskEmail(email)) : undefined,
+    identifier: maskPhone(phone),
   });
+
+  // Send notifications (async, don't wait)
+  Promise.all([
+    // Notify admin via Telegram
+    notifyAdminNewOrder({
+      number: order.number,
+      customerName: order.customerName,
+      phone: order.phone,
+      total: order.total,
+      itemCount: order.items.length,
+    }),
+    // Send confirmation email to customer
+    sendOrderConfirmationEmail({
+      number: order.number,
+      customerName: order.customerName,
+      email: order.email,
+      total: order.total,
+      items: order.items.map((item) => ({
+        name: item.name,
+        qty: item.qty,
+        price: item.price,
+      })),
+      city: order.city,
+      npBranch: order.npBranch,
+    }),
+    // Send confirmation SMS to customer
+    sendOrderConfirmationSms({
+      number: order.number,
+      phone: order.phone,
+      total: order.total,
+    }),
+  ]).catch((error) => {
+    console.error("[orders] Failed to send notifications:", error);
+  });
+
   return NextResponse.json({ id: order.id, number: order.number });
 }
 

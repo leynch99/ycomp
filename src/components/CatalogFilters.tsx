@@ -73,61 +73,64 @@ export function CatalogFilters({
   return (
     <div className="space-y-6 text-sm">
       <div>
-        <div className="font-semibold text-slate-900">Ціна</div>
+        <div className="font-semibold text-slate-900 dark:text-white">Ціна</div>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <input
             placeholder="від"
-            className="rounded-lg border border-slate-200 px-3 py-2 text-xs focus:border-[var(--lilac-500)] focus:outline-none"
+            className="rounded-lg border border-slate-200 dark:border-white/10 bg-transparent dark:bg-slate-900 dark:text-white px-3 py-2 text-xs transition-all duration-200 focus:border-lilac-500 focus:shadow-md focus:shadow-lilac-500/20 focus:outline-none"
             defaultValue={searchParams.get("minPrice") ?? ""}
             onBlur={(event) => setRange("minPrice", event.target.value)}
           />
           <input
             placeholder="до"
-            className="rounded-lg border border-slate-200 px-3 py-2 text-xs focus:border-[var(--lilac-500)] focus:outline-none"
+            className="rounded-lg border border-slate-200 dark:border-white/10 bg-transparent dark:bg-slate-900 dark:text-white px-3 py-2 text-xs transition-all duration-200 focus:border-lilac-500 focus:shadow-md focus:shadow-lilac-500/20 focus:outline-none"
             defaultValue={searchParams.get("maxPrice") ?? ""}
             onBlur={(event) => setRange("maxPrice", event.target.value)}
           />
         </div>
       </div>
       <div>
-        <div className="font-semibold text-slate-900">Наявність</div>
+        <div className="font-semibold text-slate-900 dark:text-white">Наявність</div>
         <label
-          className={`mt-3 flex items-center gap-2 rounded-lg border px-2 py-1 text-xs ${
+          className={`mt-3 flex items-center gap-2 rounded-lg border px-3 py-2 text-xs cursor-pointer transition-all duration-200 active:scale-95 ${
             searchParams.get("inStock") === "true"
-              ? "border-lilac bg-[var(--lilac-50)] text-[var(--lilac-900)]"
-              : "border-slate-200 text-slate-600"
+              ? "border-lilac-500 bg-lilac-50 dark:bg-lilac-900/20 text-lilac-900 dark:text-lilac-300 shadow-sm"
+              : "border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-lilac-300 dark:hover:border-lilac-700 hover:bg-slate-50 dark:hover:bg-slate-800"
           }`}
         >
           <input
             type="checkbox"
+            className="accent-lilac cursor-pointer"
             checked={searchParams.get("inStock") === "true"}
             onChange={() => toggleBoolean("inStock")}
           />
           В наявності
         </label>
         <label
-          className={`mt-2 flex items-center gap-2 rounded-lg border px-2 py-1 text-xs ${
+          className={`mt-2 flex items-center gap-2 rounded-lg border px-3 py-2 text-xs cursor-pointer transition-all duration-200 active:scale-95 ${
             searchParams.get("lead") === "1-3"
-              ? "border-lilac bg-[var(--lilac-50)] text-[var(--lilac-900)]"
-              : "border-slate-200 text-slate-600"
+              ? "border-lilac-500 bg-lilac-50 dark:bg-lilac-900/20 text-lilac-900 dark:text-lilac-300 shadow-sm"
+              : "border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-lilac-300 dark:hover:border-lilac-700 hover:bg-slate-50 dark:hover:bg-slate-800"
           }`}
         >
           <input
             type="checkbox"
+            className="accent-lilac cursor-pointer"
             checked={searchParams.get("lead") === "1-3"}
             onChange={() => toggle("lead", "1-3")}
           />
           Під замовлення 1–3 дні
         </label>
         <label
-          className={`mt-2 flex items-center gap-2 rounded-lg border px-2 py-1 text-xs ${
+          className={`mt-2 flex items-center gap-2 rounded-lg border px-3 py-2 text-xs cursor-pointer transition-all duration-200 active:scale-95 ${
             searchParams.get("lead") === "3-7"
-              ? "border-lilac bg-[var(--lilac-50)] text-[var(--lilac-900)]"
-              : "border-slate-200 text-slate-600"
+              ? "border-lilac-500 bg-lilac-50 dark:bg-lilac-900/20 text-lilac-900 dark:text-lilac-300 shadow-sm"
+              : "border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-lilac-300 dark:hover:border-lilac-700 hover:bg-slate-50 dark:hover:bg-slate-800"
           }`}
         >
           <input
             type="checkbox"
+            className="accent-lilac cursor-pointer"
             checked={searchParams.get("lead") === "3-7"}
             onChange={() => toggle("lead", "3-7")}
           />
@@ -136,31 +139,31 @@ export function CatalogFilters({
       </div>
       <FilterGroup title="Бренд" options={brands} paramKey="brand" onToggle={toggle} />
       {sockets.length > 0 && (
-        <FilterGroup title="Socket" options={sockets} paramKey="socket" onToggle={toggle} />
+        <FilterGroup title="Сокет" options={sockets} paramKey="socket" onToggle={toggle} />
       )}
       {cores.length > 0 && (
-        <FilterGroup title="Cores" options={cores} paramKey="cores" onToggle={toggle} />
+        <FilterGroup title="Кількість ядер" options={cores} paramKey="cores" onToggle={toggle} />
       )}
       {threads.length > 0 && (
-        <FilterGroup title="Threads" options={threads} paramKey="threads" onToggle={toggle} />
+        <FilterGroup title="Кількість потоків" options={threads} paramKey="threads" onToggle={toggle} />
       )}
       {chipsets.length > 0 && (
-        <FilterGroup title="Chipset" options={chipsets} paramKey="chipset" onToggle={toggle} />
+        <FilterGroup title="Чипсет" options={chipsets} paramKey="chipset" onToggle={toggle} />
       )}
       {formFactors.length > 0 && (
         <FilterGroup
-          title="Form factor"
+          title="Форм-фактор"
           options={formFactors}
           paramKey="formFactor"
           onToggle={toggle}
         />
       )}
       {ramTypes.length > 0 && (
-        <FilterGroup title="RAM type" options={ramTypes} paramKey="ramType" onToggle={toggle} />
+        <FilterGroup title="Тип пам'яті" options={ramTypes} paramKey="ramType" onToggle={toggle} />
       )}
       {ramCapacities.length > 0 && (
         <FilterGroup
-          title="RAM capacity"
+          title="Об'єм пам'яті"
           options={ramCapacities}
           paramKey="ramCapacity"
           onToggle={toggle}
@@ -168,7 +171,7 @@ export function CatalogFilters({
       )}
       {ramFrequencies.length > 0 && (
         <FilterGroup
-          title="RAM frequency"
+          title="Частота пам'яті"
           options={ramFrequencies}
           paramKey="ramFrequency"
           onToggle={toggle}
@@ -176,7 +179,7 @@ export function CatalogFilters({
       )}
       {storageTypes.length > 0 && (
         <FilterGroup
-          title="Storage"
+          title="Тип накопичувача"
           options={storageTypes}
           paramKey="storageType"
           onToggle={toggle}
@@ -184,7 +187,7 @@ export function CatalogFilters({
       )}
       {storageCapacities.length > 0 && (
         <FilterGroup
-          title="Storage capacity"
+          title="Об'єм накопичувача"
           options={storageCapacities}
           paramKey="storageCapacity"
           onToggle={toggle}
@@ -192,14 +195,14 @@ export function CatalogFilters({
       )}
       {psuWattages.length > 0 && (
         <FilterGroup
-          title="PSU wattage"
+          title="Потужність БЖ"
           options={psuWattages}
           paramKey="psuWattage"
           onToggle={toggle}
         />
       )}
       {psuCerts.length > 0 && (
-        <FilterGroup title="PSU cert" options={psuCerts} paramKey="psuCert" onToggle={toggle} />
+        <FilterGroup title="Сертифікат БЖ" options={psuCerts} paramKey="psuCert" onToggle={toggle} />
       )}
     </div>
   );
@@ -222,19 +225,20 @@ function FilterGroup({
 
   return (
     <div>
-      <div className="font-semibold text-slate-900">{title}</div>
+      <div className="font-semibold text-slate-900 dark:text-white mt-1">{title}</div>
       <div className="mt-3 space-y-2">
         {options.map((option) => (
           <label
             key={option.value}
-            className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-xs ${
+            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs cursor-pointer transition-all duration-200 active:scale-95 ${
               selected.includes(option.value)
-                ? "border-lilac bg-[var(--lilac-50)] text-[var(--lilac-900)]"
-                : "border-slate-200 text-slate-600"
+                ? "border-lilac-500 bg-lilac-50 dark:bg-lilac-900/20 text-lilac-900 dark:text-lilac-300 shadow-sm"
+                : "border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-lilac-300 dark:hover:border-lilac-700 hover:bg-slate-50 dark:hover:bg-slate-800"
             }`}
           >
             <input
               type="checkbox"
+              className="accent-lilac cursor-pointer"
               checked={selected.includes(option.value)}
               onChange={() => onToggle(paramKey, option.value)}
             />

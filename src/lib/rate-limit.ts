@@ -2,15 +2,11 @@
  * Rate limiter with IP + email/phone composite limits.
  * Challenge-after-N-failures, security telemetry.
  *
- * ⚠️  WARNING: Default store is in-memory — it does NOT persist across
- * serverless invocations (Vercel). In production, replace with
- * Upstash Redis or Vercel KV by implementing RateLimitStore.
- *
- * Example with Upstash:
- *   import { Redis } from "@upstash/redis";
- *   const redis = Redis.fromEnv();
- *   setRateLimitStore({ async get(k) { return redis.get(k); }, ... });
+ * Automatically uses Upstash Redis in production if UPSTASH_REDIS_REST_URL
+ * and UPSTASH_REDIS_REST_TOKEN are set. Falls back to in-memory for development.
  */
+
+import { Redis } from "@upstash/redis";
 
 export interface RateLimitStore {
   get(key: string): Promise<{ count: number; resetAt: number } | null>;
@@ -18,7 +14,7 @@ export interface RateLimitStore {
   delete(key: string): Promise<void>;
 }
 
-// --- In-memory store (default, dev-only) ---
+// --- In-memory store (dev-only fallback) ---
 const memoryMap = new Map<string, { count: number; resetAt: number }>();
 const inMemoryStore: RateLimitStore = {
   async get(key) { return memoryMap.get(key) ?? null; },
@@ -26,14 +22,68 @@ const inMemoryStore: RateLimitStore = {
   async delete(key) { memoryMap.delete(key); },
 };
 
+// --- Upstash Redis store (production) ---
+function createUpstashStore(): RateLimitStore | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!url || !token) return null;
+
+  const redis = new Redis({ url, token });
+
+  return {
+    async get(key) {
+      try {
+        const data = await redis.get<{ count: number; resetAt: number }>(key);
+        return data;
+      } catch (error) {
+        console.error("[rate-limit] Redis get error:", error);
+        return null;
+      }
+    },
+    async set(key, data) {
+      try {
+        const ttlSeconds = Math.ceil((data.resetAt - Date.now()) / 1000);
+        if (ttlSeconds > 0) {
+          await redis.setex(key, ttlSeconds, data);
+        }
+      } catch (error) {
+        console.error("[rate-limit] Redis set error:", error);
+      }
+    },
+    async delete(key) {
+      try {
+        await redis.del(key);
+      } catch (error) {
+        console.error("[rate-limit] Redis delete error:", error);
+      }
+    },
+  };
+}
+
+// Auto-configure store based on environment
 let activeStore: RateLimitStore = inMemoryStore;
 
-/** Swap in a production-ready store (Upstash Redis, Vercel KV, etc.) */
+if (typeof process !== "undefined") {
+  const upstashStore = createUpstashStore();
+  if (upstashStore) {
+    activeStore = upstashStore;
+    console.log("[rate-limit] ✓ Using Upstash Redis for persistent rate limiting");
+  } else if (process.env.NODE_ENV === "production") {
+    console.warn(
+      "[rate-limit] ⚠️  UPSTASH_REDIS_REST_URL/TOKEN not set. Using in-memory store. " +
+      "Rate limits will NOT persist across serverless invocations!"
+    );
+  } else {
+    console.log("[rate-limit] Using in-memory store (development mode)");
+  }
+}
+
+/** Swap in a custom store (for testing or alternative providers) */
 export function setRateLimitStore(store: RateLimitStore) {
   activeStore = store;
 }
 
-const store = new Map<string, { count: number; resetAt: number }>();
 const failureStore = new Map<string, { count: number; resetAt: number }>();
 const challengeStore = new Map<string, { answer: number; resetAt: number }>();
 const CLEANUP_INTERVAL = 60_000;
@@ -49,8 +99,10 @@ function cleanup() {
   const now = Date.now();
   if (now - lastCleanup < CLEANUP_INTERVAL) return;
   lastCleanup = now;
-  for (const [key, data] of store.entries()) {
-    if (data.resetAt < now) store.delete(key);
+  // Note: cleanup only works for in-memory stores (Map-based)
+  // For Redis-based stores, use TTL on keys directly
+  for (const [key, data] of memoryMap.entries()) {
+    if (data.resetAt < now) memoryMap.delete(key);
   }
   for (const [key, data] of failureStore.entries()) {
     if (data.resetAt < now) failureStore.delete(key);
@@ -162,19 +214,20 @@ export async function rateLimit(
 ): Promise<{ ok: boolean; remaining: number }> {
   cleanup();
   const now = Date.now();
-  const entry = store.get(identifier);
+  const entry = await activeStore.get(identifier);
 
   if (!entry) {
-    store.set(identifier, { count: 1, resetAt: now + windowMs });
+    await activeStore.set(identifier, { count: 1, resetAt: now + windowMs });
     return { ok: true, remaining: maxRequests - 1 };
   }
 
   if (entry.resetAt < now) {
-    store.set(identifier, { count: 1, resetAt: now + windowMs });
+    await activeStore.set(identifier, { count: 1, resetAt: now + windowMs });
     return { ok: true, remaining: maxRequests - 1 };
   }
 
   entry.count++;
+  await activeStore.set(identifier, entry);
   if (entry.count > maxRequests) {
     securityLog("rate_limit_hit", { key: identifier.slice(0, 32), count: entry.count });
     return { ok: false, remaining: 0 };

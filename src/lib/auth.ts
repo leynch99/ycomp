@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { signSession, verifySession } from "@/lib/jwt";
+import { signSession, verifySession, SESSION_TTL_SECONDS } from "@/lib/jwt";
 import { SESSION_COOKIE } from "@/lib/session";
 
 export async function hashPassword(password: string) {
@@ -28,7 +28,7 @@ export async function createSessionCookie({
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24, // 24 години
+    maxAge: SESSION_TTL_SECONDS, // 7 днів — синхронізовано з JWT exp
   });
 }
 
@@ -47,7 +47,11 @@ export async function getSessionUser() {
       where: { id: payload.userId },
       select: { id: true, email: true, name: true, phone: true, birthDate: true, role: true },
     });
-  } catch {
+  } catch (error) {
+    // Log JWT verification errors for debugging
+    if (process.env.NODE_ENV === "development") {
+      console.error("[auth] Session verification failed:", error);
+    }
     return null;
   }
 }

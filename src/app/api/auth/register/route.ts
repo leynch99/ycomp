@@ -86,7 +86,7 @@ async function registerHandler(request: Request) {
       data: { email, passwordHash, name, phone },
     });
     if (identifier) clearAuthFailures("register", ip, identifier);
-    await createSessionCookie({ userId: user.id, role: user.role, email: user.email });
+    await createSessionCookie({ userId: user.id, role: user.role as "ADMIN" | "USER", email: user.email });
     emitSecurityEvent("auth_success", {
       ip: ip.slice(0, 12),
       type: "register",

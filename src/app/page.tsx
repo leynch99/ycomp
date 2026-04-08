@@ -3,23 +3,35 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/ProductCard";
 import { formatPrice } from "@/lib/utils";
+import { ADVANTAGES } from "@/lib/constants";
 
 export default async function Home() {
-  const [hits, deals, categories, heroBanners, tileBanners, latestPost] = await Promise.all([
+  const [hits, deals, categories, heroBanners, tileBanners, latestPost, kits] = await Promise.all([
     prisma.product.findMany({
       take: 8,
       orderBy: { popularity: "desc" },
-      include: { images: { orderBy: { position: "asc" }, take: 1 } },
+      select: {
+        id: true, name: true, slug: true, sku: true, brand: true,
+        salePrice: true, oldPrice: true, stockQty: true, inStock: true,
+        leadTimeMinDays: true, leadTimeMaxDays: true, isDeal: true, isOutlet: true,
+        images: { orderBy: { position: "asc" }, take: 1, select: { url: true } },
+      },
     }),
     prisma.product.findMany({
       where: { isDeal: true },
       take: 6,
-      include: { images: { orderBy: { position: "asc" }, take: 1 } },
+      select: {
+        id: true, name: true, slug: true, sku: true, brand: true,
+        salePrice: true, oldPrice: true, stockQty: true, inStock: true,
+        leadTimeMinDays: true, leadTimeMaxDays: true, isDeal: true, isOutlet: true,
+        images: { orderBy: { position: "asc" }, take: 1, select: { url: true } },
+      },
     }),
     prisma.category.findMany({
       where: { parentId: null },
       orderBy: { name: "asc" },
       take: 8,
+      select: { id: true, name: true, slug: true },
     }),
     prisma.banner.findMany({
       where: { type: "hero", isActive: true },
@@ -34,21 +46,16 @@ export default async function Home() {
     prisma.blogPost.findFirst({
       where: { isPublished: true },
       orderBy: { createdAt: "desc" },
+      select: { id: true, slug: true, title: true, excerpt: true, createdAt: true },
+    }),
+    prisma.kit.findMany({
+      where: { isActive: true },
+      orderBy: { position: "asc" },
+      select: { id: true, title: true, price: true, linkUrl: true },
     }),
   ]);
 
-  const kits = [
-    { title: "CPU + MB + RAM", price: 12999 },
-    { title: "Upgrade SSD + RAM", price: 3999 },
-    { title: "Silent PC", price: 28999 },
-    { title: "Streaming Kit", price: 21999 },
-  ];
-
-  const advantages = [
-    { title: "Гарантія та повернення", text: "Офіційна гарантія та 14 днів на повернення." },
-    { title: "Перевірка сумісності", text: "Контролюємо сумісність у конфігураторі." },
-    { title: "Швидка підтримка", text: "Консультації по телефону та в чаті." },
-  ];
+  const advantages = ADVANTAGES;
 
   const hero = heroBanners[0] ?? null;
   const hasBanners = hero || tileBanners.length > 0;
@@ -292,14 +299,14 @@ export default async function Home() {
         <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-2xl">Готові комплекти</h2>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-4">
           {kits.map((kit) => (
-            <div key={kit.title} className="rounded-xl border border-slate-200/70 dark:border-white/5 bg-white dark:bg-slate-800/80 p-4 transition duration-300 hover:shadow-xl dark:hover:shadow-white/5 sm:rounded-2xl sm:p-6">
+            <div key={kit.id} className="rounded-xl border border-slate-200/70 dark:border-white/5 bg-white dark:bg-slate-800/80 p-4 transition duration-300 hover:shadow-xl dark:hover:shadow-white/5 sm:rounded-2xl sm:p-6">
               <div className="text-[10px] text-slate-500 dark:text-slate-400 sm:text-sm">Набір</div>
               <div className="mt-1 text-sm font-semibold dark:text-white sm:mt-2 sm:text-lg">{kit.title}</div>
               <div className="mt-2 text-xs font-medium text-slate-900 dark:text-slate-200 sm:mt-4 sm:text-sm">
                 від {formatPrice(kit.price)}
               </div>
               <Link
-                href="/configurator"
+                href={kit.linkUrl}
                 className="mt-3 inline-flex rounded-full border border-lilac-200 dark:border-white/10 dark:text-slate-200 px-3 py-1.5 text-[10px] transition hover:border-lilac-500 hover:text-lilac-600 dark:hover:border-lilac-400 dark:hover:text-lilac-400 sm:mt-4 sm:px-4 sm:py-2 sm:text-xs"
               >
                 Зібрати
@@ -311,12 +318,12 @@ export default async function Home() {
 
       {/* Advantages */}
       <section className="mx-auto max-w-7xl px-4">
-        <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Переваги</h2>
+        <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-2xl">Переваги</h2>
         <div className="mt-4 grid gap-3 sm:mt-6 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
           {advantages.map((adv) => (
-            <div key={adv.title} className="rounded-xl border bg-white p-4 sm:rounded-2xl sm:p-6">
-              <div className="text-sm font-semibold sm:text-lg">{adv.title}</div>
-              <p className="mt-1 text-xs text-slate-600 sm:mt-2 sm:text-sm">{adv.text}</p>
+            <div key={adv.title} className="rounded-xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-900/60 p-4 sm:rounded-2xl sm:p-6">
+              <div className="text-sm font-semibold text-slate-900 dark:text-white sm:text-lg">{adv.title}</div>
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 sm:mt-2 sm:text-sm">{adv.text}</p>
             </div>
           ))}
         </div>
@@ -325,17 +332,17 @@ export default async function Home() {
       {/* Trade-in / Service */}
       <section className="mx-auto max-w-7xl px-4">
         <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-          <Link href="/trade-in" className="rounded-xl border bg-white p-4 sm:rounded-2xl sm:p-6">
-            <div className="text-[10px] text-slate-500 sm:text-sm">Trade-in</div>
-            <div className="mt-1 text-sm font-semibold sm:mt-2 sm:text-lg">Обміняйте старе на нове</div>
-            <p className="mt-1 text-xs text-slate-600 sm:mt-2 sm:text-sm">
+          <Link href="/trade-in" className="rounded-xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-900/60 p-4 sm:rounded-2xl sm:p-6 transition hover:shadow-lg dark:hover:shadow-white/5">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 sm:text-sm">Trade-in</div>
+            <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white sm:mt-2 sm:text-lg">Обміняйте старе на нове</div>
+            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 sm:mt-2 sm:text-sm">
               Отримайте вигідну пропозицію за вашу техніку.
             </p>
           </Link>
-          <Link href="/service" className="rounded-xl border bg-white p-4 sm:rounded-2xl sm:p-6">
-            <div className="text-[10px] text-slate-500 sm:text-sm">Сервіс</div>
-            <div className="mt-1 text-sm font-semibold sm:mt-2 sm:text-lg">Діагностика та збірка</div>
-            <p className="mt-1 text-xs text-slate-600 sm:mt-2 sm:text-sm">
+          <Link href="/service" className="rounded-xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-900/60 p-4 sm:rounded-2xl sm:p-6 transition hover:shadow-lg dark:hover:shadow-white/5">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 sm:text-sm">Сервіс</div>
+            <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white sm:mt-2 sm:text-lg">Діагностика та збірка</div>
+            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 sm:mt-2 sm:text-sm">
               Збірка, чистка та налаштування ПК під ключ.
             </p>
           </Link>

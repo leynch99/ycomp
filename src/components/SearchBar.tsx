@@ -118,7 +118,7 @@ export function SearchBar() {
         });
         window.location.href = `/p/${item.slug}`;
       } else {
-        sendSearchEvent("search_submit_all_results");
+        sendSearchEvent("search_submit_all_results", {});
         window.location.href = `/catalog?q=${encodeURIComponent(query)}`;
       }
     }

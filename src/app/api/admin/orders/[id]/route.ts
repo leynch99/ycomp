@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
-import type { OrderStatus, PayoutStatus } from "@prisma/client";
 
 export async function GET(_request: NextRequest, context: { params: unknown }) {
   if (!(await requireAdmin())) {
@@ -18,7 +17,7 @@ export async function GET(_request: NextRequest, context: { params: unknown }) {
 
 export async function PATCH(request: NextRequest, context: { params: any }) {
   const body = await request.json();
-  const status = body.status as OrderStatus;
+  const status = body.status as string;
   const resolvedParams = await Promise.resolve(context.params);
 
   if (!(await requireAdmin())) {
@@ -57,7 +56,7 @@ export async function PATCH(request: NextRequest, context: { params: any }) {
           orderId: order.id,
           supplierId,
           amount,
-          status: "PENDING" as PayoutStatus,
+          status: "PENDING" as string,
         },
       });
     }

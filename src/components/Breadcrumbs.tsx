@@ -18,13 +18,13 @@ export function Breadcrumbs({
   };
 
   return (
-    <nav className="text-xs text-slate-500">
+    <nav className="text-xs text-slate-500 dark:text-slate-400" aria-label="Breadcrumb">
       <script type="application/ld+json">{JSON.stringify(schema)}</script>
       <ol className="flex flex-wrap items-center gap-2">
         {items.map((item, index) => (
           <li key={`${item.title}-${index}`} className="flex items-center gap-2">
             {item.href ? (
-              <Link href={item.href} className="hover:text-slate-700">
+              <Link href={item.href} className="hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
                 {item.title}
               </Link>
             ) : (

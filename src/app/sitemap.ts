@@ -1,52 +1,69 @@
 import { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const [categories, products, blogPosts] = await Promise.all([
-    prisma.category.findMany({ select: { slug: true } }),
-    prisma.product.findMany({ select: { slug: true } }),
-    prisma.blogPost.findMany({ where: { isPublished: true }, select: { slug: true } }),
-  ]);
+const PROD_PER_SITEMAP = 1000;
 
-  const routes = [
-    "/",
-    "/blog",
-    "/catalog",
-    "/deals",
-    "/outlet",
-    "/configurator",
-    "/trade-in",
-    "/service",
-    "/cart",
-    "/checkout",
-    "/wishlist",
-    "/compare",
-    "/delivery",
-    "/payment",
-    "/warranty",
-    "/about",
-    "/contacts",
-    "/terms",
-    "/privacy",
-  ];
+export async function generateSitemaps() {
+  const totalProducts = await prisma.product.count();
+  const chunks = Math.ceil(totalProducts / PROD_PER_SITEMAP);
+  const productsChunks = Array.from({ length: chunks }, (_, i) => ({ id: String(i) }));
+  
+  return [{ id: "core" }, { id: "categories" }, { id: "blog" }, ...productsChunks];
+}
 
-  return [
-    ...routes.map((route) => ({
+export default async function sitemap({ id }: { id: string }): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ycomp.ua";
+
+  if (id === "core") {
+    const routes = [
+      "", "/blog", "/catalog", "/deals", "/configurator",
+      "/trade-in", "/service", "/cart", "/checkout", "/wishlist",
+      "/compare", "/delivery", "/payment", "/warranty", "/about",
+      "/contacts", "/terms", "/privacy",
+    ];
+    return routes.map((route) => ({
       url: `${baseUrl}${route}`,
       lastModified: new Date(),
-    })),
-    ...categories.map((cat) => ({
+      changeFrequency: "daily",
+      priority: route === "" ? 1 : 0.8,
+    }));
+  }
+
+  if (id === "categories") {
+    const categories = await prisma.category.findMany({ select: { slug: true } });
+    return categories.map((cat) => ({
       url: `${baseUrl}/c/${cat.slug}`,
       lastModified: new Date(),
-    })),
-    ...products.map((product) => ({
-      url: `${baseUrl}/p/${product.slug}`,
-      lastModified: new Date(),
-    })),
-    ...blogPosts.map((post) => ({
+      changeFrequency: "daily",
+      priority: 0.9,
+    }));
+  }
+
+  if (id === "blog") {
+    const blogPosts = await prisma.blogPost.findMany({ 
+      where: { isPublished: true }, 
+      select: { slug: true, updatedAt: true } 
+    });
+    return blogPosts.map((post) => ({
       url: `${baseUrl}/blog/${post.slug}`,
-      lastModified: new Date(),
-    })),
-  ];
+      lastModified: post.updatedAt,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    }));
+  }
+
+  // Otherwise, it's a product chunk (e.g. id="0", "1", "2")
+  const pageIndex = Number(id);
+  const products = await prisma.product.findMany({
+    skip: pageIndex * PROD_PER_SITEMAP,
+    take: PROD_PER_SITEMAP,
+    select: { slug: true, updatedAt: true },
+  });
+
+  return products.map((product) => ({
+    url: `${baseUrl}/p/${product.slug}`,
+    lastModified: product.updatedAt,
+    changeFrequency: "weekly",
+    priority: 0.6,
+  }));
 }

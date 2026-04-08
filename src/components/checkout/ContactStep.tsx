@@ -34,11 +34,11 @@ export function ContactStep({
   return (
     <fieldset
       ref={contactsRef}
-      className={`space-y-3 rounded-xl border border-slate-200/70 bg-white p-4 sm:rounded-2xl sm:p-6 ${
+      className={`space-y-3 rounded-xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-900/60 p-4 sm:rounded-2xl sm:p-6 ${
         step < 1 ? "opacity-60" : ""
       }`}
     >
-      <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
         Контактні дані {requiredMark}
       </legend>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -93,7 +93,7 @@ export function ContactStep({
         <button
           type="button"
           onClick={goNext}
-          className="mt-2 rounded-full border border-lilac px-4 py-2 text-sm text-lilac hover:bg-[var(--lilac-50)]"
+          className="mt-2 rounded-full border border-lilac px-4 py-2 text-sm text-lilac hover:bg-[var(--lilac-50)] dark:hover:bg-[var(--lilac-50)]/10"
         >
           Далі: Доставка →
         </button>

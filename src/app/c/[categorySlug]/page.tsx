@@ -20,14 +20,20 @@ type MetaProps = { params: Promise<{ categorySlug: string }>; searchParams: Reco
 
 export async function generateMetadata({ params, searchParams }: MetaProps): Promise<Metadata> {
   const { categorySlug } = await params;
+  const resolvedSearchParams = await searchParams;
   const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
   if (!category) return {};
   const desc = category.description?.slice(0, 160) ?? `${category.name} — компʼютерні комплектуючі в YComp`;
-  const canonical = buildCatalogCanonical(`/c/${category.slug}`, searchParams);
+  const canonical = buildCatalogCanonical(`/c/${category.slug}`, resolvedSearchParams);
+  
+  const activeParams = Object.keys(resolvedSearchParams || {}).filter((key) => key !== "view");
+  const robots = activeParams.length > 0 ? { index: false, follow: true } : { index: true, follow: true };
+
   return {
     title: category.name,
     description: desc,
     alternates: { canonical },
+    robots,
     openGraph: {
       title: `${category.name} | YComp`,
       description: desc,
@@ -39,33 +45,34 @@ export async function generateMetadata({ params, searchParams }: MetaProps): Pro
 
 export default async function CategoryPage({ params, searchParams }: Props) {
   const { categorySlug } = await params;
+  const resolvedSearchParams = await searchParams;
   const category = await prisma.category.findUnique({
     where: { slug: categorySlug },
   });
   if (!category) return notFound();
 
-  const page = Number(searchParams.page ?? "1");
+  const page = Number(resolvedSearchParams.page ?? "1");
   const perPage = 12;
   const paramsFilters = {
-    q: typeof searchParams.q === "string" ? searchParams.q : undefined,
-    brand: toArray(searchParams.brand),
-    minPrice: Number(searchParams.minPrice ?? "") || undefined,
-    maxPrice: Number(searchParams.maxPrice ?? "") || undefined,
-    inStock: typeof searchParams.inStock === "string" ? searchParams.inStock : undefined,
-    lead: typeof searchParams.lead === "string" ? searchParams.lead : undefined,
-    socket: toArray(searchParams.socket),
-    cores: toNumberArray(searchParams.cores),
-    threads: toNumberArray(searchParams.threads),
-    chipset: toArray(searchParams.chipset),
-    formFactor: toArray(searchParams.formFactor),
-    ramType: toArray(searchParams.ramType),
-    ramCapacity: toNumberArray(searchParams.ramCapacity),
-    ramFrequency: toNumberArray(searchParams.ramFrequency),
-    storageType: toArray(searchParams.storageType),
-    storageCapacity: toNumberArray(searchParams.storageCapacity),
-    psuWattage: toNumberArray(searchParams.psuWattage),
-    psuCert: toArray(searchParams.psuCert),
-    sort: typeof searchParams.sort === "string" ? searchParams.sort : undefined,
+    q: typeof resolvedSearchParams.q === "string" ? resolvedSearchParams.q : undefined,
+    brand: toArray(resolvedSearchParams.brand),
+    minPrice: Number(resolvedSearchParams.minPrice ?? "") || undefined,
+    maxPrice: Number(resolvedSearchParams.maxPrice ?? "") || undefined,
+    inStock: typeof resolvedSearchParams.inStock === "string" ? resolvedSearchParams.inStock : undefined,
+    lead: typeof resolvedSearchParams.lead === "string" ? resolvedSearchParams.lead : undefined,
+    socket: toArray(resolvedSearchParams.socket),
+    cores: toNumberArray(resolvedSearchParams.cores),
+    threads: toNumberArray(resolvedSearchParams.threads),
+    chipset: toArray(resolvedSearchParams.chipset),
+    formFactor: toArray(resolvedSearchParams.formFactor),
+    ramType: toArray(resolvedSearchParams.ramType),
+    ramCapacity: toNumberArray(resolvedSearchParams.ramCapacity),
+    ramFrequency: toNumberArray(resolvedSearchParams.ramFrequency),
+    storageType: toArray(resolvedSearchParams.storageType),
+    storageCapacity: toNumberArray(resolvedSearchParams.storageCapacity),
+    psuWattage: toNumberArray(resolvedSearchParams.psuWattage),
+    psuCert: toArray(resolvedSearchParams.psuCert),
+    sort: typeof resolvedSearchParams.sort === "string" ? resolvedSearchParams.sort : undefined,
   };
 
   const where = { ...buildWhere(paramsFilters), categoryId: category.id };
@@ -107,7 +114,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const query = new URLSearchParams(
-    Object.entries(searchParams).flatMap(([key, value]) => {
+    Object.entries(resolvedSearchParams).flatMap(([key, value]) => {
       if (!value) return [];
       if (Array.isArray(value)) return value.map((v) => [key, v]);
       return [[key, value]];
@@ -126,7 +133,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   };
   const activeLead = paramsFilters.lead ?? "all";
 
-  const compact = searchParams.view === "compact";
+  const compact = resolvedSearchParams.view === "compact";
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",

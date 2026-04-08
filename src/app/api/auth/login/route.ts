@@ -13,26 +13,25 @@ import {
 } from "@/lib/rate-limit";
 import { withApiLog } from "@/lib/api-with-logging";
 import { emitSecurityEvent, maskEmail } from "@/lib/security-telemetry";
+import { validateRequest, loginSchema } from "@/lib/validation";
 
 async function loginHandler(request: Request) {
-  const body = await request.json();
-  const email = String(body?.email ?? "").trim().toLowerCase().slice(0, 255);
-  const password = body?.password;
-  const challengeId = body?.challengeId;
-  const challengeAnswer = body?.challengeAnswer;
+  // Validate request body
+  const validation = await validateRequest(request, loginSchema);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+
+  const { email, password, challengeId, challengeAnswer } = validation.data;
 
   const ip = getClientIp(request);
-  emitSecurityEvent("auth_attempt", { ip: ip.slice(0, 12), email: maskEmail(email || "?") });
+  emitSecurityEvent("auth_attempt", { ip: ip.slice(0, 12), email: maskEmail(email) });
 
   const { ok: allowed } = await rateLimitComposite(request, "login", email, 5, 5, 60_000);
   if (!allowed) {
     securityLog429("login", ip, email, "login");
     emitSecurityEvent("rate_limit_block", { ip: ip.slice(0, 12), endpoint: "login" });
     return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
-  }
-
-  if (!email || !password || typeof password !== "string") {
-    return NextResponse.json({ error: "invalid" }, { status: 400 });
   }
 
   const mustChallenge = needsChallenge("login", ip, email);
@@ -68,7 +67,7 @@ async function loginHandler(request: Request) {
   }
 
   clearAuthFailures("login", ip, email);
-  await createSessionCookie({ userId: user.id, role: user.role, email: user.email });
+  await createSessionCookie({ userId: user.id, role: user.role as "ADMIN" | "USER", email: user.email });
   emitSecurityEvent("auth_success", { ip: ip.slice(0, 12), email: maskEmail(email) });
   return NextResponse.json({ id: user.id });
 }
