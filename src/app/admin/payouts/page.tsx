@@ -14,7 +14,7 @@ export default async function AdminPayoutsPage() {
     <div className="space-y-4">
       <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">Виплати постачальникам</h1>
       <AdminPayoutsClient
-        payouts={payouts.map((p) => ({
+        payouts={payouts.map((p: any) => ({
           id: p.id,
           supplier: p.supplier.name,
           amount: p.amount,
