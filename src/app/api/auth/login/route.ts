@@ -19,7 +19,7 @@ async function loginHandler(request: Request) {
   // Validate request body
   const validation = await validateRequest(request, loginSchema);
   if (!validation.success) {
-    return NextResponse.json({ error: validation.error }, { status: 400 });
+    return NextResponse.json({ error: (validation as any).error }, { status: 400 });
   }
 
   const { email, password, challengeId, challengeAnswer } = validation.data;

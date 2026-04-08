@@ -13,7 +13,7 @@ async function ordersHandler(request: Request) {
   // Validate request body
   const validation = await validateRequest(request, createOrderSchema);
   if (!validation.success) {
-    return NextResponse.json({ error: validation.error }, { status: 400 });
+    return NextResponse.json({ error: (validation as any).error }, { status: 400 });
   }
 
   const body = validation.data;
